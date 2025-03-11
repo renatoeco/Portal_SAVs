@@ -375,10 +375,10 @@ def home_page():
         # Captura o usuário do session_state para a variável usuario
         usuario = st.session_state.usuario
      
-# ????????
+# # ????????
 
-    st.sidebar.write(st.session_state)
-    st.sidebar.write("Usuário logado:", usuario)
+#     st.sidebar.write(st.session_state)
+#     st.sidebar.write("Usuário logado:", usuario)
 
 
     col1, col2 = st.columns([8, 1])
@@ -398,7 +398,8 @@ def home_page():
         
     st.write("")
 
-    minhas_viagens, nova_sav = st.tabs(["Minhas Viagens", "Nova Solicitação de Viagem"])
+    # Abas da home
+    minhas_viagens, nova_sav = st.tabs([":material/flight_takeoff: Minhas Viagens", ":material/add: Nova Solicitação de Viagem"])
 
     with minhas_viagens:
         df_savs_int = carregar_savs_int()
