@@ -381,7 +381,9 @@ def home_page():
     st.sidebar.write("Usuário logado:", usuario)
 
 
-    st.markdown(
+    col1, col2 = st.columns([8, 1])
+
+    col1.markdown(
         f"""
         <div>
             <h3 style="color: gray;">Olá {usuario['nome_completo'].split(' ')[0]}</h3>
@@ -390,6 +392,10 @@ def home_page():
         unsafe_allow_html=True
     )
 
+    if col2.button("Atualizar", icon=":material/refresh:", use_container_width=True):
+        st.rerun()  
+        
+        
     st.write("")
 
     minhas_viagens, nova_sav = st.tabs(["Minhas Viagens", "Nova Solicitação de Viagem"])
@@ -407,7 +413,7 @@ def home_page():
         df_savs_int = df_savs_int[df_savs_int['CPF:'].astype(str) == str(usuario['cpf'])]
 
         # Capturar a data da viagem
-        df_savs_int['Data da viagem:'] = df_savs_int['Itinerário:'].str[6:16]
+        df_savs_int['Data da viagem:'] = df_savs_int['Itinerário:'].str[6:16].replace('-', '/', regex=True)
 
         # Capturar todos os destinos
         # Expressão regular para capturar o que está entre "Cidade de chegada: " e ","
@@ -415,39 +421,77 @@ def home_page():
         # Aplicar a regex para cada linha da coluna
         df_savs_int["Destinos:"] = df_savs_int["Itinerário:"].apply(lambda x: ' > '.join(re.findall(destinos, x)))
 
+        
+
+
 
         # Criar cabeçalho da "tabela"
         col1, col2, col3, col4, col5 = st.columns([1, 1, 4, 2, 2])
 
         col1.write('**Código da viagem**')
         col2.write('**Data da viagem**')
-        col3.write('**Destinos**')
+        col3.write('**Itinerário**')
         # col4.write('**Detalhes da viagem**')
         # col5.write('**Relatórios**')
 
 
-        # st.divider()  # Separação entre cabeçalho e dados
+        status_relatorio = "entregue"
+        # status_relatorio = "pendente"
+
 
         # Iterar sobre a lista de viagens
         for index, row in df_savs_int.iterrows():
+
+            # Preparar o link personalizado para o relatório -----------------------------------------------------
+
+            # Extrair cidade(s) de destino
+            # Transformar o itinerário em uma lista de dicionários
+            trechos = parse_itinerario(row["Itinerário:"])
+
+            # Pegando a primeira e a última data
+            data_inicial = trechos[0]["Data"]
+            data_final = trechos[-1]["Data"]
+            periodo_viagem = f"{data_inicial} a {data_final}".replace('-', '/')
+
+            # Extraindo todas as "Cidade de chegada" e concatenando com vírgula
+            cidades_chegada = [viagem["Cidade de chegada"] for viagem in trechos]
+            destinos = ", ".join(cidades_chegada)
+
+            # URL do formulário de RVS interno
+            jotform_rvs_interno_url = f"{st.secrets['links']['url_rvs_int']}?codigoDa={row['Código da viagem:']}&qualE={row['Qual é a fonte do recurso?']}&nomeDo={row['Nome completo:']}&email={row['E-mail:']}&cidadesDe={destinos}&periodoDa={periodo_viagem}"
+
+            # ----------------------------------------------------------------------------------------------------- 
+
+       
             col1, col2, col3, col4, col5 = st.columns([1, 1, 4, 2, 2])  # Criar novas colunas para cada linha
             
             col1.write(row['Código da viagem:'])
             col2.write(row['Data da viagem:'])
             col3.write(row['Destinos:'])
             col4.button('Detalhes', key=f"detalhes_{index}", on_click=mostrar_detalhes, args=(row,), use_container_width=True, icon=":material/info:")
-            col5.button('Relatório', key=f"relatorio_{index}", use_container_width=True, icon=":material/description:")
+            
+            # Botão dinâmico sobre o relatório
+            
+            # Se o relatório foi entregue, vê o relatório  
+            if status_relatorio == "entregue":
+                col5.button('Relatório entregue', key=f"entregue_{index}", use_container_width=True, icon=":material/check:")
+            
+            # Se não foi entregue, botão para enviar
+            else:
+                with col5.popover('Enviar relatório', use_container_width=True, icon=":material/description:"):
+                    st.markdown(f"<a href='{jotform_rvs_interno_url}' target='_blank'>Clique aqui enviar o relatório</a>", unsafe_allow_html=True)
+
 
             st.divider()  # Separador entre cada linha da tabela
 
             
     with nova_sav:
 
-        # URL do seu formulário JotForm
-        jotform_url = f"{st.secrets['links']['url_form_int']}?nomeCompleto={usuario['nome_completo']}&dataDe={usuario['data_nascimento']}'&genero={usuario['genero']}&rg={usuario['rg']}&cpf={usuario['cpf']}&telefone={usuario['telefone']}&email={usuario['email']}&emailDoa={usuario['email_coordenador']}&banco={usuario['banco']['nome']}&agencia={usuario['banco']['agencia']}&conta={usuario['banco']['conta']}"
+        # URL do formulário de SAV interna
+        jotform_sav_interno_url = f"{st.secrets['links']['url_sav_int']}?nomeCompleto={usuario['nome_completo']}&dataDe={usuario['data_nascimento']}'&genero={usuario['genero']}&rg={usuario['rg']}&cpf={usuario['cpf']}&telefone={usuario['telefone']}&email={usuario['email']}&emailDoa={usuario['email_coordenador']}&banco={usuario['banco']['nome']}&agencia={usuario['banco']['agencia']}&conta={usuario['banco']['conta']}"
 
         # Exibir o iframe
-        # st.components.v1.iframe(jotform_url, width=None, height=3550)
+        # st.components.v1.iframe(jotform_sav_interno_url, width=None, height=3550)
 
 
 
