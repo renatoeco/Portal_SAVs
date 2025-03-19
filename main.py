@@ -180,26 +180,8 @@ def mostrar_detalhes_rvs(row, df_rvss):
 
     # Selecionando o relatório a partir do código da SAV
     relatorio = df_rvss[df_rvss["Código da viagem:"].str.upper() == row["Código da viagem:"].upper()].iloc[0]
-    # st.write(relatorio)
-
-    # # TRATAMENTO DO ITINERÁRIO
-    # # Transformar o itinerário em uma lista de dicionários
-    # viagens = parse_itinerario(row["Itinerário:"])
-    # # Criar um DataFrame a partir do dicionário
-    # df_trechos = pd.DataFrame(viagens)
-    # # Substituir os campos com None por ""
-    # df_trechos.fillna("", inplace=True)
-    # # Renomear colunas
-    # df_trechos.rename(columns={"Tipo de transporte": "Transporte", "Horário de preferência": "Horário"}, inplace=True)
 
 
-    # # TRATAMENTO DAS DIÁRIAS
-    # # Transformar as diárias em uma lista de dicionários
-    # diarias = parse_diarias(row["Diárias"])
-    # # Criar um DataFrame a partir da lista de dicionários
-    # df_diarias = pd.DataFrame(diarias)
-    # # Substituir os campos com None por ""
-    # df_diarias.fillna("", inplace=True)
 
 
     # TRATAMENTO DO LINK DE EDIÇÃO
@@ -225,8 +207,8 @@ def mostrar_detalhes_rvs(row, df_rvss):
     st.write(f"**Modalidade:** {relatorio['Modalidade:']}")
     st.write(f"**Número de pernoites:** {relatorio['Número de pernoites:']}")
     st.write(f"**Modo de transporte até o destino:** {relatorio['Modo de transporte até o destino:']}")
-    st.write(f"**Valor gasto com transporte no destino (R$):** {relatorio['Valor gasto com transporte no destino (R$):']}")
-    st.write(f"**Valor das diárias recebidas (R$):** {relatorio['Valor das diárias recebidas (R$):']}")
+    st.write(f"**Valor gasto com transporte no destino:** {relatorio['Valor gasto com transporte no destino (R$):']}")
+    st.write(f"**Valor das diárias recebidas:** {relatorio['Valor das diárias recebidas (R$):']}")
     st.write(f"**Itens de despesa cobertos pelo anfitrião (descrição e valor):** {relatorio['Itens de despesa cobertos pelo anfitrião (descrição e valor):']}")
     st.write(f"**Atividades realizadas na viagem:** {relatorio['Descreva as atividades realizadas na viagem:']}")
     st.write(f"**Principais Resultados / Produtos:** {relatorio['Principais Resultados / Produtos:']}")
@@ -246,8 +228,14 @@ def mostrar_detalhes_rvs(row, df_rvss):
     st.write(f"**Despesas cobertas pelo anfitrião:** {relatorio['Despesas cobertas pelo anfitrião (descrição e valor):']}")
     # st.write(f"**Submission ID:** {relatorio['Submission ID']}")
 
-    obs = relatorio['Observações gerais:'].replace("$", "\\$")
-    st.write(f"**Observações:** {obs}")
+
+    st.write(f"**Observações:** {relatorio['Observações gerais:']}")
+
+    st.markdown(f"**Observações:** {relatorio['Observações gerais:']}", unsafe_allow_html=True)
+
+
+
+    # # st.write(f"**Link para edição:** {link_edicao}")
 
     st.write('')
 
@@ -460,7 +448,12 @@ def pagina_login():
 def home_page():
 
     df_savs_int = carregar_savs_int()
+    df_savs_int = df_savs_int.replace({'\$': '\\$'}, regex=True)
+
+
     df_rvss_int = carregar_rvss_int()
+    df_rvss_int = df_rvss_int.replace({'\$': '\\$'}, regex=True)
+
 
     # USUÁRIO INTERNO ---------------------------
 
