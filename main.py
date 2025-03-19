@@ -2,7 +2,7 @@
 import streamlit as st
 import pandas as pd
 from pymongo import MongoClient
-from datetime import datetime
+from datetime import date
 import re
 
 import gspread
@@ -70,7 +70,7 @@ sheet_id = st.secrets.links.id_sheet_savs_int
 
 
 
-# Função para transformar o itinerário em um dicionário
+# Função para transformar o itinerário em uma lista de dicionários
 def parse_itinerario(itinerario_texto):
 
     viagens = []
@@ -93,7 +93,7 @@ def parse_itinerario(itinerario_texto):
 
     return viagens
 
-# Função para transformar as diarias em um dicionário
+# Função para transformar as diarias em uma lista de dicionários
 def parse_diarias(diarias_texto):
     diarias = []
 
@@ -116,11 +116,9 @@ def parse_diarias(diarias_texto):
 
 
 
-
-
-# Função para mostrar os detalhes no diálogo
+# Função para mostrar os detalhes da SAV no diálogo
 @st.dialog("Detalhes da Viagem", width='large')
-def mostrar_detalhes(row):
+def mostrar_detalhes_sav(row):
 
     # TRATAMENTO DO ITINERÁRIO
     # Transformar o itinerário em uma lista de dicionários
@@ -142,17 +140,9 @@ def mostrar_detalhes(row):
     df_diarias.fillna("", inplace=True)
 
 
-
-
     # TRATAMENTO DO LINK DE EDIÇÃO
     sumbission_id = row["Submission ID"]
     link_edicao = f"https://www.jotform.com/edit/{sumbission_id}"
-
-
-    # Botão de edição
-
-
-
 
 
     # INFORMAÇÕES
@@ -184,19 +174,96 @@ def mostrar_detalhes(row):
 
 
 
+@st.dialog("Detalhes do Relatório", width='large')
+def mostrar_detalhes_rvs(row, df_rvss):
+
+    # Selecionando o relatório a partir do código da SAV
+    relatorio = df_rvss[df_rvss["Código da viagem:"].str.upper() == row["Código da viagem:"].upper()].iloc[0]
+    st.write(relatorio)
+
+    # # TRATAMENTO DO ITINERÁRIO
+    # # Transformar o itinerário em uma lista de dicionários
+    # viagens = parse_itinerario(row["Itinerário:"])
+    # # Criar um DataFrame a partir do dicionário
+    # df_trechos = pd.DataFrame(viagens)
+    # # Substituir os campos com None por ""
+    # df_trechos.fillna("", inplace=True)
+    # # Renomear colunas
+    # df_trechos.rename(columns={"Tipo de transporte": "Transporte", "Horário de preferência": "Horário"}, inplace=True)
+
+
+    # # TRATAMENTO DAS DIÁRIAS
+    # # Transformar as diárias em uma lista de dicionários
+    # diarias = parse_diarias(row["Diárias"])
+    # # Criar um DataFrame a partir da lista de dicionários
+    # df_diarias = pd.DataFrame(diarias)
+    # # Substituir os campos com None por ""
+    # df_diarias.fillna("", inplace=True)
+
+
+    # TRATAMENTO DO LINK DE EDIÇÃO
+    # sumbission_id = row["Submission ID"]
+    # link_edicao = f"https://www.jotform.com/edit/{sumbission_id}"
+
+
+    # INFORMAÇÕES
+    st.write(f"**Código da viagem:** {row['Código da viagem:']}")   # Pega o código direto da SAV
+
+    st.write(f"**Data do envio do relatório:** {relatorio['Submission Date']}")
+    st.write(f"**Fonte de recurso:** {relatorio['Qual é a fonte do recurso?']}")
+    st.write(f"**Período da viagem:** {relatorio['Período da viagem:']}")
+    st.write(f"**Cidade(s) de destino:** {relatorio['Cidade(s) de destino:']}")
+    
+    
+    st.write(f"**Modalidade:** {relatorio['Modalidade:']}")
+    st.write(f"**Número de pernoites:** {relatorio['Número de pernoites:']}")
+    st.write(f"**Modo de transporte até o destino:** {relatorio['Modo de transporte até o destino:']}")
+    st.write(f"**Valor gasto com transporte no destino (R$):** {relatorio['Valor gasto com transporte no destino (R$):']}")
+    st.write(f"**Valor das diárias recebidas (R$):** {relatorio['Valor das diárias recebidas (R$):']}")
+    st.write(f"**Itens de despesa cobertos pelo anfitrião (descrição e valor):** {relatorio['Itens de despesa cobertos pelo anfitrião (descrição e valor):']}")
+    st.write(f"**Atividades realizadas na viagem:** {relatorio['Descreva as atividades realizadas na viagem:']}")
+    st.write(f"**Principais Resultados / Produtos:** {relatorio['Principais Resultados / Produtos:']}")
+
+    # Convertendo a string em uma lista de URLs
+    lista_fotos = relatorio['Inclua 2 fotos da viagem:'].split("\n")
+    # Criando colunas dinamicamente com base na quantidade de fotos
+    num_fotos = len(lista_fotos)
+    cols = st.columns(num_fotos)  # Cria colunas iguais ao número de fotos
+    # Exibindo cada foto em uma coluna
+    for idx, (col, foto) in enumerate(zip(cols, lista_fotos), start=1):
+        with col:
+            st.image(foto)
 
 
 
 
+    # st.write("**Fotos da viagem:**")
+    # for foto in relatorio["Inclua 2 fotos da viagem:"]:
+    #     st.image(foto, caption=f"Foto {relatorio['Inclua 2 fotos da viagem:'].index(foto) + 1}")
+
+    st.write(f"**Faça upload dos anexos:** {relatorio['Faça upload dos anexos:']}")
+    st.write(f"**Observações gerais:** {relatorio['Observações gerais:']}")
+    st.write(f"**Despesas cobertas pelo anfitrião (descrição e valor):** {relatorio['Despesas cobertas pelo anfitrião (descrição e valor):']}")
+    st.write(f"**Submission ID:** {relatorio['Submission ID']}")
+    st.write(f"**Observações:** {relatorio['Observações']}")
 
 
-# # Função para mostrar os detalhes no diálogo
-# @st.dialog("Relatório", width='large')
-# def ver_relatorio(row):
-#     st.write(f"**Código da viagem:** {row['Código da viagem:']}")
-#     st.write(f"**Data da viagem:** {row['Data da viagem:']}")
-#     st.write(f"**Destinos:** {row['Destinos:']}")
-#     st.write(f"**Descrição do objetivo da viagem:** {row['Descrição do objetivo da viagem:']}")
+    # st.write(f"**Custo pago pelo anfitrião:** {row['A viagem tem algum custo pago pelo anfitrião?']}")
+    # st.write(f"**É necessária locação de veículo?** {row['Será necessário locação de veículo?']}")
+    # st.write(f"**Tipo de veículo:** {row['Descreva o tipo de veículo desejado:']}")
+    # st.write(f"**Observações:** {row['Observações gerais:']}")
+    # # st.write(f"**Link para edição:** {link_edicao}")
+
+    st.write('')
+
+    col1, col2, col3 = st.columns([1, 1, 1])
+
+    # with col2.popover("Editar a SAV", icon=":material/edit:", use_container_width=True):
+    #     st.markdown(f"<a href='{link_edicao}' target='_blank'>Clique aqui para editar a SAV</a>", unsafe_allow_html=True)
+
+
+
+
 
 
 
@@ -239,9 +306,41 @@ def carregar_savs_int():
     df_savs["Submission Date"] = pd.to_datetime(df_savs["Submission Date"])  # Garantir que é datetime
     df_savs["Submission Date"] = df_savs["Submission Date"].dt.strftime("%d/%m/%Y")  # Converter para string no formato brasileiro
 
-    # Converter as colunas de data para datetime
+    # Filtar SAVs com o prefixo "SAV-"
+    df_savs = df_savs[df_savs['Código da viagem:'].str.upper().str.startswith('SAV-')]
+    # df_savs = df_savs[df_savs['Código da viagem:'].str.lower().str.startswith('sav-')]
+
+    # st.write(df_savs)
 
     return df_savs
+
+
+# Carregar RVSs internos no google sheets ------------------------------
+def carregar_rvss_int():
+
+    sheet = client.open_by_key(sheet_id)
+
+    # values_rvss = sheet.worksheet("TESTE RENATO SAVs").get_all_values()
+    values_rvss = sheet.worksheet("Recebimento de RVSs").get_all_values()
+
+    # Criar DataFrame de RVSs. A primeira linha é usada como cabeçalho
+    df_rvss = pd.DataFrame(values_rvss[1:], columns=values_rvss[0])
+
+    # Filtar SAVs com o prefixo "SAV-"
+    df_rvss = df_rvss[df_rvss['Código da viagem:'].str.upper().str.startswith('SAV-')]
+    # df_rvss = df_rvss[df_rvss['Código da viagem:'].str.lower().str.startswith('sav-')]
+
+    # Converter as colunas de data para datetime
+    df_rvss["Submission Date"] = pd.to_datetime(df_rvss["Submission Date"])  # Garantir que é datetime
+    df_rvss["Submission Date"] = df_rvss["Submission Date"].dt.strftime("%d/%m/%Y")  # Converter para string no formato brasileiro
+
+
+    return df_rvss
+
+
+
+
+
 
 
 # Função para checar o CPF no login ------------------------------
@@ -367,6 +466,8 @@ def pagina_login():
 
 def home_page():
 
+    df_savs_int = carregar_savs_int()
+    df_rvss_int = carregar_rvss_int()
 
     # USUÁRIO INTERNO ---------------------------
 
@@ -375,124 +476,171 @@ def home_page():
         # Captura o usuário do session_state para a variável usuario
         usuario = st.session_state.usuario
      
-# # ????????
-
-#     st.sidebar.write(st.session_state)
-#     st.sidebar.write("Usuário logado:", usuario)
 
 
-    col1, col2 = st.columns([8, 1])
 
-    col1.markdown(
-        f"""
-        <div>
-            <h3 style="color: gray;">Olá {usuario['nome_completo'].split(' ')[0]}</h3>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+        col1, col2 = st.columns([8, 1])
 
-    if col2.button("Atualizar", icon=":material/refresh:", use_container_width=True):
-        st.rerun()  
+        col1.markdown(
+            f"""
+            <div>
+                <h3 style="color: gray;">Olá {usuario['nome_completo'].split(' ')[0]}</h3>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        if col2.button("Atualizar", icon=":material/refresh:", use_container_width=True):
+            st.session_state.status_usuario = ""
+            st.rerun()  
+            
+            
+        st.write("")
+
+        # Abas da home
+        minhas_viagens, nova_sav = st.tabs([":material/flight_takeoff: Minhas Viagens", ":material/add: Nova Solicitação de Viagem"])
+
+
+        # ABA MINHAS VIAGENS
+
+        with minhas_viagens:
+            df_savs_int = carregar_savs_int()
+            df_rvss_int = carregar_rvss_int()
+
+            # Limpar a coluna CPF: quero apenas os números
+            df_savs_int['CPF:'] = df_savs_int['CPF:'].str.replace(r'[^\d]+', '', regex=True)
+
+            # Filtar SAVs com o CPF do usuário
+            df_savs_int = df_savs_int[df_savs_int['CPF:'].astype(str) == str(usuario['cpf'])]
+
+            # Capturar a data da viagem
+            df_savs_int['Data da viagem:'] = df_savs_int['Itinerário:'].str[6:16].replace('-', '/', regex=True)
+
+            # Capturar todos os destinos
+            # Expressão regular para capturar o que está entre "Cidade de chegada: " e ","
+            destinos = r'Cidade de chegada: (.*?)(?:,|$)'
+            # Aplicar a regex para cada linha da coluna
+            df_savs_int["Destinos:"] = df_savs_int["Itinerário:"].apply(lambda x: ' > '.join(re.findall(destinos, x)))
+
         
+            # Criar cabeçalho da "tabela"
+            col1, col2, col3, col4, col5 = st.columns([2, 2, 7, 2, 2])
+
+            col1.write('**Código da viagem**')
+            col2.write('**Data da viagem**')
+            col3.write('**Itinerário**')
+            # col4.write('**SAVs**')
+            # col5.write('**Relatórios**')
+
+
+            # Iniciar a variável na session_state que vai identificar se o usuário está impedido ou não de enviar relatório (se tem algum pendente)
+            st.session_state.status_usuario = ""
+
+            # Iterar sobre a lista de viagens
+            for index, row in df_savs_int[::-1].iterrows():
+
+                # Preparar o link personalizado para o relatório -----------------------------------------------------
+
+                # Extrair cidade(s) de destino
+                # Transformar o itinerário em uma lista de dicionários
+                trechos = parse_itinerario(row["Itinerário:"])
+
+                # Pegando a primeira e a última data
+                data_inicial = trechos[0]["Data"]
+                data_final = trechos[-1]["Data"]
+                periodo_viagem = f"{data_inicial} a {data_final}".replace('-', '/')
+
+                # Extraindo todas as "Cidade de chegada" e concatenando com vírgula
+                cidades_chegada = [viagem["Cidade de chegada"] for viagem in trechos]
+                destinos = ", ".join(cidades_chegada)
+
+                # URL do formulário de RVS interno
+                jotform_rvs_interno_url = f"{st.secrets['links']['url_rvs_int']}?codigoDa={row['Código da viagem:']}&qualE={row['Qual é a fonte do recurso?']}&nomeDo={row['Nome completo:']}&email={row['E-mail:']}&cidadesDe={destinos}&periodoDa={periodo_viagem}"
+
+                # ----------------------------------------------------------------------------------------------------- 
+
+                # Conteúdo da lista de viagens
+
+                col1, col2, col3, col4, col5 = st.columns([2, 2, 7, 2, 2])
+                
+                col1.write(row['Código da viagem:'])
+                col2.write(row['Data da viagem:'])
+                col3.write(row['Destinos:'])
+                col4.button('Detalhes', key=f"detalhes_{index}", on_click=mostrar_detalhes_sav, args=(row,), use_container_width=True, icon=":material/info:")
+                
+
+
+                # Botão dinâmico sobre o relatório --------------------------------------------
+
+                # Verificar se o relatório foi entregue. Procura se tem o código da SAV em algum relatório 
+                if row['Código da viagem:'].upper() in df_rvss_int['Código da viagem:'].str.upper().values:
+
+                    status_relatorio = "entregue"
+
+                # Se não tem nenhum relatório com esse código de SAV
+                else:
+                    status_relatorio = "pendente"
+
+                    # Se a data_final da viagem menor do que hoje, o usuário está impedido
+                    if pd.to_datetime(data_final, dayfirst=True).timestamp() < pd.to_datetime(date.today()).timestamp():
+                    
+                        st.session_state.status_usuario = "impedido"
+
+
+                    st.write(data_final)
+
+
+
+
+                # Se o relatório foi entregue, vê o relatório  
+                if status_relatorio == "entregue":
+                    col5.button('Relatório entregue', key=f"entregue_{index}", on_click=mostrar_detalhes_rvs, args=(row, df_rvss_int), use_container_width=True, icon=":material/check:", type="primary")
+                
+                # Se não foi entregue, botão para enviar
+                # else:
+                if status_relatorio == "pendente":
+                    with col5.popover('Enviar relatório', use_container_width=True, icon=":material/description:"):
+                        st.markdown(f"<a href='{jotform_rvs_interno_url}' target='_blank'>Clique aqui para enviar o relatório</a>", unsafe_allow_html=True)
+
+
+                st.divider()  # Separador entre cada linha da tabela
+
+            st.write(st.session_state.status_usuario)
+
+
+
+
+        # ABA DE NOVA SOLICITAÇÃO
         
-    st.write("")
+        with nova_sav:
 
-    # Abas da home
-    minhas_viagens, nova_sav = st.tabs([":material/flight_takeoff: Minhas Viagens", ":material/add: Nova Solicitação de Viagem"])
-
-    with minhas_viagens:
-        df_savs_int = carregar_savs_int()
-
-        # Filtar SAVs com o prefixo "SAV-"
-        df_savs_int = df_savs_int[df_savs_int['Código da viagem:'].str.startswith('SAV-')]
-
-        # Limpar a coluna CPF: quero apenas os números
-        df_savs_int['CPF:'] = df_savs_int['CPF:'].str.replace(r'[^\d]+', '', regex=True)
-
-        # Filtar SAVs com o CPF do usuário
-        df_savs_int = df_savs_int[df_savs_int['CPF:'].astype(str) == str(usuario['cpf'])]
-
-        # Capturar a data da viagem
-        df_savs_int['Data da viagem:'] = df_savs_int['Itinerário:'].str[6:16].replace('-', '/', regex=True)
-
-        # Capturar todos os destinos
-        # Expressão regular para capturar o que está entre "Cidade de chegada: " e ","
-        destinos = r'Cidade de chegada: (.*?)(?:,|$)'
-        # Aplicar a regex para cada linha da coluna
-        df_savs_int["Destinos:"] = df_savs_int["Itinerário:"].apply(lambda x: ' > '.join(re.findall(destinos, x)))
-
-        
+            if st.session_state.status_usuario == "impedido":
+                st.write('')
+                st.write('')
+                st.write('')
 
 
+                st.markdown("""
+                    <div style="text-align: center;">
+                        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet">
+                        <span class="material-symbols-rounded" style="font-size:58px; color:red;">
+                            warning
+                        </span>
+                    </div>
+                """, unsafe_allow_html=True)
 
-        # Criar cabeçalho da "tabela"
-        col1, col2, col3, col4, col5 = st.columns([1, 1, 4, 2, 2])
-
-        col1.write('**Código da viagem**')
-        col2.write('**Data da viagem**')
-        col3.write('**Itinerário**')
-        # col4.write('**Detalhes da viagem**')
-        # col5.write('**Relatórios**')
-
-
-        status_relatorio = "entregue"
-        # status_relatorio = "pendente"
+                st.write('')
 
 
-        # Iterar sobre a lista de viagens
-        for index, row in df_savs_int.iterrows():
+                st.markdown("<div style='text-align: center; color: red; font-size: 20px;'>Você precisa enviar os <strong>relatórios pendentes</strong> antes de solicitar uma nova viagem.</div>", unsafe_allow_html=True)
 
-            # Preparar o link personalizado para o relatório -----------------------------------------------------
-
-            # Extrair cidade(s) de destino
-            # Transformar o itinerário em uma lista de dicionários
-            trechos = parse_itinerario(row["Itinerário:"])
-
-            # Pegando a primeira e a última data
-            data_inicial = trechos[0]["Data"]
-            data_final = trechos[-1]["Data"]
-            periodo_viagem = f"{data_inicial} a {data_final}".replace('-', '/')
-
-            # Extraindo todas as "Cidade de chegada" e concatenando com vírgula
-            cidades_chegada = [viagem["Cidade de chegada"] for viagem in trechos]
-            destinos = ", ".join(cidades_chegada)
-
-            # URL do formulário de RVS interno
-            jotform_rvs_interno_url = f"{st.secrets['links']['url_rvs_int']}?codigoDa={row['Código da viagem:']}&qualE={row['Qual é a fonte do recurso?']}&nomeDo={row['Nome completo:']}&email={row['E-mail:']}&cidadesDe={destinos}&periodoDa={periodo_viagem}"
-
-            # ----------------------------------------------------------------------------------------------------- 
-
-       
-            col1, col2, col3, col4, col5 = st.columns([1, 1, 4, 2, 2])  # Criar novas colunas para cada linha
-            
-            col1.write(row['Código da viagem:'])
-            col2.write(row['Data da viagem:'])
-            col3.write(row['Destinos:'])
-            col4.button('Detalhes', key=f"detalhes_{index}", on_click=mostrar_detalhes, args=(row,), use_container_width=True, icon=":material/info:")
-            
-            # Botão dinâmico sobre o relatório
-            
-            # Se o relatório foi entregue, vê o relatório  
-            if status_relatorio == "entregue":
-                col5.button('Relatório entregue', key=f"entregue_{index}", use_container_width=True, icon=":material/check:")
-            
-            # Se não foi entregue, botão para enviar
             else:
-                with col5.popover('Enviar relatório', use_container_width=True, icon=":material/description:"):
-                    st.markdown(f"<a href='{jotform_rvs_interno_url}' target='_blank'>Clique aqui enviar o relatório</a>", unsafe_allow_html=True)
 
+                # URL do formulário de SAV interna
+                jotform_sav_interno_url = f"{st.secrets['links']['url_sav_int']}?nomeCompleto={usuario['nome_completo']}&dataDe={usuario['data_nascimento']}'&genero={usuario['genero']}&rg={usuario['rg']}&cpf={usuario['cpf']}&telefone={usuario['telefone']}&email={usuario['email']}&emailDoa={usuario['email_coordenador']}&banco={usuario['banco']['nome']}&agencia={usuario['banco']['agencia']}&conta={usuario['banco']['conta']}"
 
-            st.divider()  # Separador entre cada linha da tabela
-
-            
-    with nova_sav:
-
-        # URL do formulário de SAV interna
-        jotform_sav_interno_url = f"{st.secrets['links']['url_sav_int']}?nomeCompleto={usuario['nome_completo']}&dataDe={usuario['data_nascimento']}'&genero={usuario['genero']}&rg={usuario['rg']}&cpf={usuario['cpf']}&telefone={usuario['telefone']}&email={usuario['email']}&emailDoa={usuario['email_coordenador']}&banco={usuario['banco']['nome']}&agencia={usuario['banco']['agencia']}&conta={usuario['banco']['conta']}"
-
-        # Exibir o iframe
-        # st.components.v1.iframe(jotform_sav_interno_url, width=None, height=3550)
+                # Exibir o iframe
+                st.components.v1.iframe(jotform_sav_interno_url, width=None, height=3550)
 
 
 
