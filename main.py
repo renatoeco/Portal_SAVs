@@ -243,13 +243,11 @@ def mostrar_detalhes_rvs(row, df_rvss):
 
 
     st.write(f"**Documentos anexados:** {relatorio['Faça upload dos anexos:']}")
-    st.write(f"**Observações gerais:** {relatorio['Observações gerais:']}")
     st.write(f"**Despesas cobertas pelo anfitrião:** {relatorio['Despesas cobertas pelo anfitrião (descrição e valor):']}")
     # st.write(f"**Submission ID:** {relatorio['Submission ID']}")
-    st.write(f"**Observações:** {relatorio['Observações']}")
 
-
-    # # st.write(f"**Link para edição:** {link_edicao}")
+    obs = relatorio['Observações gerais:'].replace("$", "\\$")
+    st.write(f"**Observações:** {obs}")
 
     st.write('')
 
