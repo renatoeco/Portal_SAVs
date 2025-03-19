@@ -228,10 +228,8 @@ def mostrar_detalhes_rvs(row, df_rvss):
     st.write(f"**Despesas cobertas pelo anfitrião:** {relatorio['Despesas cobertas pelo anfitrião (descrição e valor):']}")
     # st.write(f"**Submission ID:** {relatorio['Submission ID']}")
 
-
     st.write(f"**Observações:** {relatorio['Observações gerais:']}")
 
-    st.markdown(f"**Observações:** {relatorio['Observações gerais:']}", unsafe_allow_html=True)
 
 
 
@@ -288,9 +286,9 @@ def carregar_savs_int():
 
     # Filtar SAVs com o prefixo "SAV-"
     df_savs = df_savs[df_savs['Código da viagem:'].str.upper().str.startswith('SAV-')]
-    # df_savs = df_savs[df_savs['Código da viagem:'].str.lower().str.startswith('sav-')]
 
-    # st.write(df_savs)
+    df_savs = df_savs.replace({'\$': '\\$'}, regex=True)
+
 
     return df_savs
 
@@ -314,6 +312,8 @@ def carregar_rvss_int():
     # Converter as colunas de data para datetime
     df_rvss["Submission Date"] = pd.to_datetime(df_rvss["Submission Date"])  # Garantir que é datetime
     df_rvss["Submission Date"] = df_rvss["Submission Date"].dt.strftime("%d/%m/%Y")  # Converter para string no formato brasileiro
+
+    df_rvss = df_rvss.replace({'\$': '\\$'}, regex=True)
 
 
     return df_rvss
@@ -448,11 +448,7 @@ def pagina_login():
 def home_page():
 
     df_savs_int = carregar_savs_int()
-    df_savs_int = df_savs_int.replace({'\$': '\\$'}, regex=True)
-
-
     df_rvss_int = carregar_rvss_int()
-    df_rvss_int = df_rvss_int.replace({'\$': '\\$'}, regex=True)
 
 
     # USUÁRIO INTERNO ---------------------------
