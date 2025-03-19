@@ -144,6 +144,11 @@ def mostrar_detalhes_sav(row):
     sumbission_id = row["Submission ID"]
     link_edicao = f"https://www.jotform.com/edit/{sumbission_id}"
 
+    col1, col2, col3 = st.columns([1, 1, 1])
+
+    with col3.popover("Editar a SAV", icon=":material/edit:", use_container_width=True):
+        st.markdown(f"<a href='{link_edicao}' target='_blank'>Clique aqui para editar a SAV</a>", unsafe_allow_html=True)
+
 
     # INFORMAÇÕES
     st.write(f"**Código:** {row['Código da viagem:']}")
@@ -167,10 +172,6 @@ def mostrar_detalhes_sav(row):
 
     st.write('')
 
-    col1, col2, col3 = st.columns([1, 1, 1])
-
-    with col2.popover("Editar a SAV", icon=":material/edit:", use_container_width=True):
-        st.markdown(f"<a href='{link_edicao}' target='_blank'>Clique aqui para editar a SAV</a>", unsafe_allow_html=True)
 
 
 
@@ -179,7 +180,7 @@ def mostrar_detalhes_rvs(row, df_rvss):
 
     # Selecionando o relatório a partir do código da SAV
     relatorio = df_rvss[df_rvss["Código da viagem:"].str.upper() == row["Código da viagem:"].upper()].iloc[0]
-    st.write(relatorio)
+    # st.write(relatorio)
 
     # # TRATAMENTO DO ITINERÁRIO
     # # Transformar o itinerário em uma lista de dicionários
@@ -202,8 +203,14 @@ def mostrar_detalhes_rvs(row, df_rvss):
 
 
     # TRATAMENTO DO LINK DE EDIÇÃO
-    # sumbission_id = row["Submission ID"]
-    # link_edicao = f"https://www.jotform.com/edit/{sumbission_id}"
+    sumbission_id = relatorio["Submission ID"]
+    link_edicao = f"https://www.jotform.com/edit/{sumbission_id}"
+
+    col1, col2, col3 = st.columns([1, 1, 1])
+
+    with col3.popover("Editar o Relatório", icon=":material/edit:", use_container_width=True):
+        st.markdown(f"<a href='{link_edicao}' target='_blank'>Clique aqui para editar o Relatório</a>", unsafe_allow_html=True)
+
 
 
     # INFORMAÇÕES
@@ -235,31 +242,17 @@ def mostrar_detalhes_rvs(row, df_rvss):
             st.image(foto)
 
 
-
-
-    # st.write("**Fotos da viagem:**")
-    # for foto in relatorio["Inclua 2 fotos da viagem:"]:
-    #     st.image(foto, caption=f"Foto {relatorio['Inclua 2 fotos da viagem:'].index(foto) + 1}")
-
-    st.write(f"**Faça upload dos anexos:** {relatorio['Faça upload dos anexos:']}")
+    st.write(f"**Documentos anexados:** {relatorio['Faça upload dos anexos:']}")
     st.write(f"**Observações gerais:** {relatorio['Observações gerais:']}")
-    st.write(f"**Despesas cobertas pelo anfitrião (descrição e valor):** {relatorio['Despesas cobertas pelo anfitrião (descrição e valor):']}")
-    st.write(f"**Submission ID:** {relatorio['Submission ID']}")
+    st.write(f"**Despesas cobertas pelo anfitrião:** {relatorio['Despesas cobertas pelo anfitrião (descrição e valor):']}")
+    # st.write(f"**Submission ID:** {relatorio['Submission ID']}")
     st.write(f"**Observações:** {relatorio['Observações']}")
 
 
-    # st.write(f"**Custo pago pelo anfitrião:** {row['A viagem tem algum custo pago pelo anfitrião?']}")
-    # st.write(f"**É necessária locação de veículo?** {row['Será necessário locação de veículo?']}")
-    # st.write(f"**Tipo de veículo:** {row['Descreva o tipo de veículo desejado:']}")
-    # st.write(f"**Observações:** {row['Observações gerais:']}")
     # # st.write(f"**Link para edição:** {link_edicao}")
 
     st.write('')
 
-    col1, col2, col3 = st.columns([1, 1, 1])
-
-    # with col2.popover("Editar a SAV", icon=":material/edit:", use_container_width=True):
-    #     st.markdown(f"<a href='{link_edicao}' target='_blank'>Clique aqui para editar a SAV</a>", unsafe_allow_html=True)
 
 
 
@@ -292,6 +285,7 @@ def carregar_externos():
 
 
 # Carregar SAVs internas no google sheets ------------------------------
+@st.cache_data
 def carregar_savs_int():
 
     sheet = client.open_by_key(sheet_id)
@@ -316,6 +310,7 @@ def carregar_savs_int():
 
 
 # Carregar RVSs internos no google sheets ------------------------------
+@st.cache_data
 def carregar_rvss_int():
 
     sheet = client.open_by_key(sheet_id)
@@ -492,6 +487,7 @@ def home_page():
 
         if col2.button("Atualizar", icon=":material/refresh:", use_container_width=True):
             st.session_state.status_usuario = ""
+            st.cache_data.clear()
             st.rerun()  
             
             
@@ -587,11 +583,6 @@ def home_page():
                         st.session_state.status_usuario = "impedido"
 
 
-                    st.write(data_final)
-
-
-
-
                 # Se o relatório foi entregue, vê o relatório  
                 if status_relatorio == "entregue":
                     col5.button('Relatório entregue', key=f"entregue_{index}", on_click=mostrar_detalhes_rvs, args=(row, df_rvss_int), use_container_width=True, icon=":material/check:", type="primary")
@@ -604,8 +595,6 @@ def home_page():
 
 
                 st.divider()  # Separador entre cada linha da tabela
-
-            st.write(st.session_state.status_usuario)
 
 
 
