@@ -345,7 +345,6 @@ def carregar_rvss_int():
 
 
 
-
 def check_cpf(cpf_input):
     # Remover pontos e traços, considerando apenas os números
     cpf_numeros = ''.join(filter(str.isdigit, cpf_input))
@@ -358,46 +357,99 @@ def check_cpf(cpf_input):
     if "usuario" not in st.session_state:
         st.session_state.usuario = None
 
-
     # Verifica se o CPF tem exatamente 11 dígitos
     if len(cpf_numeros) == 11:
-
         # Atualiza CPF no session state
         st.session_state.cpf_inserido = cpf_numeros  
 
         # Busca primeiro nos usuários internos
         df_usuarios_internos = carregar_internos()
         
-        # Verificar se o CPF existe nos usuários internos
-        usuario = df_usuarios_internos[df_usuarios_internos["cpf"] == cpf_numeros].iloc[0].to_dict()
-      
-        if usuario:
+        # Verifica se existe um usuário interno com o CPF informado
+        usuario_interno = df_usuarios_internos[df_usuarios_internos["cpf"] == cpf_numeros]
+        
+        if not usuario_interno.empty:  # Se encontrou pelo menos um resultado
+            usuario = usuario_interno.iloc[0].to_dict()
             st.session_state.tipo_usuario = "interno"
-            st.session_state.usuario = usuario  # Salva o usuário no session_state
-
-
-            
+            st.session_state.usuario = usuario  
             return True  # Retorna imediatamente, sem carregar usuários externos
-
 
         # Se não for interno, busca nos usuários externos
         df_usuarios_externos = carregar_externos()
       
-        # Verificar se o CPF existe nos usuários externos
-        usuario = df_usuarios_externos[df_usuarios_externos["cpf"] == cpf_numeros].iloc[0].to_dict()
-        
-        if usuario:
-            st.session_state.tipo_usuario = "externo"
-            st.session_state.usuario = usuario  # Salva o usuário no session_state
-        
-        else:
-            st.session_state.tipo_usuario = "novo"
-            st.session_state.usuario = None  # Não encontrou usuário
+        # Verifica se o CPF existe nos usuários externos
+        usuario_externo = df_usuarios_externos[df_usuarios_externos["cpf"] == cpf_numeros]
 
+        if not usuario_externo.empty:  # Se encontrou pelo menos um resultado
+            usuario = usuario_externo.iloc[0].to_dict()
+            st.session_state.tipo_usuario = "externo"
+            st.session_state.usuario = usuario  
+            return True  # Retorna imediatamente
+
+        # Se não encontrou nem interno nem externo, marca como "novo"
+        st.session_state.tipo_usuario = "novo"
+        st.session_state.usuario = None  
         return True  # Retorna após verificar os externos e novo
 
     else:
         return False  # CPF inválido
+
+
+
+
+# def check_cpf(cpf_input):
+#     # Remover pontos e traços, considerando apenas os números
+#     cpf_numeros = ''.join(filter(str.isdigit, cpf_input))
+
+#     # Inicializa session_state se não existir
+#     if "tipo_usuario" not in st.session_state:
+#         st.session_state.tipo_usuario = None
+#     if "cpf_inserido" not in st.session_state:
+#         st.session_state.cpf_inserido = None
+#     if "usuario" not in st.session_state:
+#         st.session_state.usuario = None
+
+
+#     # Verifica se o CPF tem exatamente 11 dígitos
+#     if len(cpf_numeros) == 11:
+
+#         # Atualiza CPF no session state
+#         st.session_state.cpf_inserido = cpf_numeros  
+
+#         # Busca primeiro nos usuários internos
+#         df_usuarios_internos = carregar_internos()
+        
+#         # Verificar se o CPF existe nos usuários internos
+#         usuario = df_usuarios_internos[df_usuarios_internos["cpf"] == cpf_numeros].iloc[0].to_dict()
+      
+        
+#         if usuario:
+#             st.session_state.tipo_usuario = "interno"
+#             st.session_state.usuario = usuario  # Salva o usuário no session_state
+            
+#             return True  # Retorna imediatamente, sem carregar usuários externos
+
+
+#         # Se não for interno, busca nos usuários externos
+#         df_usuarios_externos = carregar_externos()
+      
+#         # Verificar se o CPF existe nos usuários externos
+#         usuario = df_usuarios_externos[df_usuarios_externos["cpf"] == cpf_numeros].iloc[0].to_dict()
+        
+#         if usuario:
+#             st.session_state.tipo_usuario = "externo"
+#             st.session_state.usuario = usuario  # Salva o usuário no session_state
+        
+#             return True  # Retorna imediatamente
+
+#         else:
+#             st.session_state.tipo_usuario = "novo"
+#             st.session_state.usuario = None  # Não encontrou usuário
+
+#             return True  # Retorna após verificar os externos e novo
+
+#     else:
+#         return False  # CPF inválido
 
 
 
@@ -462,23 +514,25 @@ def pagina_login_etapa_1():
     # INFORME SEU CPF
     col1, col2, col3 = st.columns([5, 2, 5])    
 
-    # Solicita o CPF
+    # Formulário para solicitar o CPF
     with col2.form("form_login", border=False):
         cpf_input = st.text_input("Digite seu CPF", placeholder="000.000.000-00")
         if st.form_submit_button("Entrar"):
             
+            # Verifica se o CPF é válido
             resultado = check_cpf(cpf_input)
             
             if resultado:
-                st.session_state.logged_in = "etapa_2_codigo"  # Avança para a etapa 2
-                # st.session_state.usuario = {"cpf": cpf_input}  # Salva o CPF no session_state
+                
+                # Atalho para desenvolvedores: loga automaticamente
+                st.session_state.logged_in = "logado"
+
+                # Avançar para a etapa de código caso necessário
+                # st.session_state.logged_in = "etapa_2_codigo"
+
                 st.rerun()
             else:
                 st.error("CPF inválido.")
-
-
-
-
 
 
 
@@ -545,171 +599,179 @@ def home_page():
 
     # USUÁRIO INTERNO ---------------------------
 
-    if st.session_state.tipo_usuario == "interno":
+    # if st.session_state.tipo_usuario == "interno":
         
-        # Captura o usuário do session_state para a variável usuario
-        usuario = st.session_state.usuario
-     
+    # Captura o usuário do session_state para a variável usuario
+    usuario = st.session_state.usuario
+    
 
+    # Cria colunas para o nome do usuário e o botão atualizar
+    col1, col2 = st.columns([8, 1])
 
+    # Exibe o nome do usuário
+    col1.markdown(
+        f"""
+        <div>
+            <h3 style="color: gray;">Olá {usuario['nome_completo'].split(' ')[0]}</h3>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-        col1, col2 = st.columns([8, 1])
-
-        col1.markdown(
-            f"""
-            <div>
-                <h3 style="color: gray;">Olá {usuario['nome_completo'].split(' ')[0]}</h3>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        if col2.button("Atualizar", icon=":material/refresh:", use_container_width=True):
-            st.session_state.status_usuario = ""
-            st.cache_data.clear()
-            st.rerun()  
-            
-            
-        st.write("")
-
-        # Abas da home
-        minhas_viagens, nova_sav = st.tabs([":material/flight_takeoff: Minhas Viagens", ":material/add: Nova Solicitação de Viagem"])
-
-
-        # ABA MINHAS VIAGENS
-
-        with minhas_viagens:
-            df_savs_int = carregar_savs_int()
-            df_rvss_int = carregar_rvss_int()
-
-            # Limpar a coluna CPF: quero apenas os números
-            df_savs_int['CPF:'] = df_savs_int['CPF:'].str.replace(r'[^\d]+', '', regex=True)
-
-            # Filtar SAVs com o CPF do usuário
-            df_savs_int = df_savs_int[df_savs_int['CPF:'].astype(str) == str(usuario['cpf'])]
-
-            # Capturar a data da viagem
-            df_savs_int['Data da viagem:'] = df_savs_int['Itinerário:'].str[6:16].replace('-', '/', regex=True)
-
-            # Capturar todos os destinos
-            # Expressão regular para capturar o que está entre "Cidade de chegada: " e ","
-            destinos = r'Cidade de chegada: (.*?)(?:,|$)'
-            # Aplicar a regex para cada linha da coluna
-            df_savs_int["Destinos:"] = df_savs_int["Itinerário:"].apply(lambda x: ' > '.join(re.findall(destinos, x)))
-
+    # Botão para atualizar a página
+    if col2.button("Atualizar", icon=":material/refresh:", use_container_width=True):
+        # Limpa o session_state e o cache, e recarrega a página
+        st.session_state.status_usuario = ""
+        st.cache_data.clear()
+        st.rerun()  
         
-            # Criar cabeçalho da "tabela"
+        
+    st.write("")
+
+    # Abas da home
+    minhas_viagens, nova_sav = st.tabs([":material/flight_takeoff: Minhas Viagens", ":material/add: Nova Solicitação de Viagem"])
+
+
+    # ABA MINHAS VIAGENS
+
+    with minhas_viagens:
+        df_savs_int = carregar_savs_int()
+        df_rvss_int = carregar_rvss_int()
+
+        # Limpar a coluna CPF: quero apenas os números
+        df_savs_int['CPF:'] = df_savs_int['CPF:'].str.replace(r'[^\d]+', '', regex=True)
+
+        # Filtar SAVs com o CPF do usuário
+        df_savs_int = df_savs_int[df_savs_int['CPF:'].astype(str) == str(usuario['cpf'])]
+
+        # Capturar a data da viagem
+        df_savs_int['Data da viagem:'] = df_savs_int['Itinerário:'].str[6:16].replace('-', '/', regex=True)
+
+        # Capturar todos os destinos
+        # Expressão regular para capturar o que está entre "Cidade de chegada: " e ","
+        destinos = r'Cidade de chegada: (.*?)(?:,|$)'
+        # Aplicar a regex para cada linha da coluna
+        df_savs_int["Destinos:"] = df_savs_int["Itinerário:"].apply(lambda x: ' > '.join(re.findall(destinos, x)))
+
+    
+        # Criar cabeçalho da "tabela"
+        col1, col2, col3, col4, col5 = st.columns([2, 2, 7, 2, 2])
+
+        col1.write('**Código da viagem**')
+        col2.write('**Data da viagem**')
+        col3.write('**Itinerário**')
+        # col4.write('**SAVs**')
+        # col5.write('**Relatórios**')
+
+
+        # Iniciar a variável na session_state que vai identificar se o usuário está impedido ou não de enviar relatório (se tem algum pendente)
+        st.session_state.status_usuario = ""
+
+        # Iterar sobre a lista de viagens
+        for index, row in df_savs_int[::-1].iterrows():
+
+            # Preparar o link personalizado para o relatório -----------------------------------------------------
+
+            # Extrair cidade(s) de destino
+            # Transformar o itinerário em uma lista de dicionários
+            trechos = parse_itinerario(row["Itinerário:"])
+
+            # Pegando a primeira e a última data
+            data_inicial = trechos[0]["Data"]
+            data_final = trechos[-1]["Data"]
+            periodo_viagem = f"{data_inicial} a {data_final}".replace('-', '/')
+
+            # Extraindo todas as "Cidade de chegada" e concatenando com vírgula
+            cidades_chegada = [viagem["Cidade de chegada"] for viagem in trechos]
+            destinos = ", ".join(cidades_chegada)
+
+            # URL do formulário de RVS interno
+            jotform_rvs_interno_url = f"{st.secrets['links']['url_rvs_int']}?codigoDa={row['Código da viagem:']}&qualE={row['Qual é a fonte do recurso?']}&nomeDo={row['Nome completo:']}&email={row['E-mail:']}&cidadesDe={destinos}&periodoDa={periodo_viagem}"
+
+            # ----------------------------------------------------------------------------------------------------- 
+
+            # Conteúdo da lista de viagens
+
             col1, col2, col3, col4, col5 = st.columns([2, 2, 7, 2, 2])
-
-            col1.write('**Código da viagem**')
-            col2.write('**Data da viagem**')
-            col3.write('**Itinerário**')
-            # col4.write('**SAVs**')
-            # col5.write('**Relatórios**')
-
-
-            # Iniciar a variável na session_state que vai identificar se o usuário está impedido ou não de enviar relatório (se tem algum pendente)
-            st.session_state.status_usuario = ""
-
-            # Iterar sobre a lista de viagens
-            for index, row in df_savs_int[::-1].iterrows():
-
-                # Preparar o link personalizado para o relatório -----------------------------------------------------
-
-                # Extrair cidade(s) de destino
-                # Transformar o itinerário em uma lista de dicionários
-                trechos = parse_itinerario(row["Itinerário:"])
-
-                # Pegando a primeira e a última data
-                data_inicial = trechos[0]["Data"]
-                data_final = trechos[-1]["Data"]
-                periodo_viagem = f"{data_inicial} a {data_final}".replace('-', '/')
-
-                # Extraindo todas as "Cidade de chegada" e concatenando com vírgula
-                cidades_chegada = [viagem["Cidade de chegada"] for viagem in trechos]
-                destinos = ", ".join(cidades_chegada)
-
-                # URL do formulário de RVS interno
-                jotform_rvs_interno_url = f"{st.secrets['links']['url_rvs_int']}?codigoDa={row['Código da viagem:']}&qualE={row['Qual é a fonte do recurso?']}&nomeDo={row['Nome completo:']}&email={row['E-mail:']}&cidadesDe={destinos}&periodoDa={periodo_viagem}"
-
-                # ----------------------------------------------------------------------------------------------------- 
-
-                # Conteúdo da lista de viagens
-
-                col1, col2, col3, col4, col5 = st.columns([2, 2, 7, 2, 2])
-                
-                col1.write(row['Código da viagem:'])
-                col2.write(row['Data da viagem:'])
-                col3.write(row['Destinos:'])
-                col4.button('Detalhes', key=f"detalhes_{index}", on_click=mostrar_detalhes_sav, args=(row,), use_container_width=True, icon=":material/info:")
-                
+            
+            col1.write(row['Código da viagem:'])
+            col2.write(row['Data da viagem:'])
+            col3.write(row['Destinos:'])
+            col4.button('Detalhes', key=f"detalhes_{index}", on_click=mostrar_detalhes_sav, args=(row,), use_container_width=True, icon=":material/info:")
+            
 
 
-                # Botão dinâmico sobre o relatório --------------------------------------------
+            # Botão dinâmico sobre o relatório --------------------------------------------
 
-                # Verificar se o relatório foi entregue. Procura se tem o código da SAV em algum relatório 
-                if row['Código da viagem:'].upper() in df_rvss_int['Código da viagem:'].str.upper().values:
+            # Verificar se o relatório foi entregue. Procura se tem o código da SAV em algum relatório 
+            if row['Código da viagem:'].upper() in df_rvss_int['Código da viagem:'].str.upper().values:
 
-                    status_relatorio = "entregue"
+                status_relatorio = "entregue"
 
-                # Se não tem nenhum relatório com esse código de SAV
-                else:
-                    status_relatorio = "pendente"
-
-                    # Se a data_final da viagem menor do que hoje, o usuário está impedido
-                    if pd.to_datetime(data_final, dayfirst=True).timestamp() < pd.to_datetime(date.today()).timestamp():
-                    
-                        st.session_state.status_usuario = "impedido"
-
-
-                # Se o relatório foi entregue, vê o relatório  
-                if status_relatorio == "entregue":
-                    col5.button('Relatório entregue', key=f"entregue_{index}", on_click=mostrar_detalhes_rvs, args=(row, df_rvss_int), use_container_width=True, icon=":material/check:", type="primary")
-                
-                # Se não foi entregue, botão para enviar
-                # else:
-                if status_relatorio == "pendente":
-                    with col5.popover('Enviar relatório', use_container_width=True, icon=":material/description:"):
-                        st.markdown(f"<a href='{jotform_rvs_interno_url}' target='_blank'>Clique aqui para enviar o relatório</a>", unsafe_allow_html=True)
-
-
-                st.divider()  # Separador entre cada linha da tabela
-
-
-
-
-        # ABA DE NOVA SOLICITAÇÃO
-        
-        with nova_sav:
-
-            if st.session_state.status_usuario == "impedido":
-                st.write('')
-                st.write('')
-                st.write('')
-
-
-                st.markdown("""
-                    <div style="text-align: center;">
-                        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet">
-                        <span class="material-symbols-rounded" style="font-size:58px; color:red;">
-                            warning
-                        </span>
-                    </div>
-                """, unsafe_allow_html=True)
-
-                st.write('')
-
-
-                st.markdown("<div style='text-align: center; color: red; font-size: 20px;'>Você precisa enviar os <strong>relatórios pendentes</strong> antes de solicitar uma nova viagem.</div>", unsafe_allow_html=True)
-
+            # Se não tem nenhum relatório com esse código de SAV
             else:
+                status_relatorio = "pendente"
 
-                # URL do formulário de SAV interna
-                jotform_sav_interno_url = f"{st.secrets['links']['url_sav_int']}?nomeCompleto={usuario['nome_completo']}&dataDe={usuario['data_nascimento']}'&genero={usuario['genero']}&rg={usuario['rg']}&cpf={usuario['cpf']}&telefone={usuario['telefone']}&email={usuario['email']}&emailDoa={usuario['email_coordenador']}&banco={usuario['banco']['nome']}&agencia={usuario['banco']['agencia']}&conta={usuario['banco']['conta']}"
+                # Se a data_final da viagem menor do que hoje, o usuário está impedido
+                if pd.to_datetime(data_final, dayfirst=True).timestamp() < pd.to_datetime(date.today()).timestamp():
+                
+                    st.session_state.status_usuario = "impedido"
 
-                # Exibir o iframe
-                st.components.v1.iframe(jotform_sav_interno_url, width=None, height=3550)
 
+            # Se o relatório foi entregue, vê o relatório  
+            if status_relatorio == "entregue":
+                col5.button('Relatório entregue', key=f"entregue_{index}", on_click=mostrar_detalhes_rvs, args=(row, df_rvss_int), use_container_width=True, icon=":material/check:", type="primary")
+            
+            # Se não foi entregue, botão para enviar
+            # else:
+            if status_relatorio == "pendente":
+                with col5.popover('Enviar relatório', use_container_width=True, icon=":material/description:"):
+                    st.markdown(f"<a href='{jotform_rvs_interno_url}' target='_blank'>Clique aqui para enviar o relatório</a>", unsafe_allow_html=True)
+
+
+            st.divider()  # Separador entre cada linha da tabela
+
+
+
+
+    # ABA DE NOVA SOLICITAÇÃO
+    
+    with nova_sav:
+
+        if st.session_state.status_usuario == "impedido":
+            st.write('')
+            st.write('')
+            st.write('')
+
+
+            st.markdown("""
+                <div style="text-align: center;">
+                    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet">
+                    <span class="material-symbols-rounded" style="font-size:58px; color:red;">
+                        warning
+                    </span>
+                </div>
+            """, unsafe_allow_html=True)
+
+            st.write('')
+
+
+            st.markdown("<div style='text-align: center; color: red; font-size: 20px;'>Você precisa enviar os <strong>relatórios pendentes</strong> antes de solicitar uma nova viagem.</div>", unsafe_allow_html=True)
+
+        else:
+
+            # URL do formulário de SAV interna
+            jotform_sav_interno_url = f"{st.secrets['links']['url_sav_int']}?nomeCompleto={usuario['nome_completo']}&dataDe={usuario['data_nascimento']}'&genero={usuario['genero']}&rg={usuario['rg']}&cpf={usuario['cpf']}&telefone={usuario['telefone']}&email={usuario['email']}&emailDoa={usuario['email_coordenador']}&banco={usuario['banco']['nome']}&agencia={usuario['banco']['agencia']}&conta={usuario['banco']['conta']}"
+
+            # Exibir o iframe
+            st.components.v1.iframe(jotform_sav_interno_url, width=None, height=4000)
+
+
+
+
+
+
+    # elif st.session_state.tipo_usuario == "externo":
 
 
 
