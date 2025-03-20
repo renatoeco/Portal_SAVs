@@ -4,6 +4,9 @@ import pandas as pd
 from pymongo import MongoClient
 from datetime import date
 import re
+import random
+import smtplib
+from email.mime.text import MIMEText
 
 import gspread
 from google.oauth2.service_account import Credentials
@@ -68,6 +71,28 @@ sheet_id = st.secrets.links.id_sheet_savs_int
 # FUNÇÕES AUXILIARES
 # ##################################################################
 
+
+# Função para enviar e-mail
+def enviar_email(destinatario, codigo):
+    remetente = st.secrets["senhas"]["endereco_email"]
+    senha = st.secrets["senhas"]["senha_email"]
+
+    assunto = "Código de Verificação da Solicitação de Viagem - ISPN"
+    corpo = f"Seu código de verificação é: {codigo}"
+
+    msg = MIMEText(corpo)
+    msg["Subject"] = assunto
+    msg["From"] = remetente
+    msg["To"] = destinatario
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(remetente, senha)
+            server.sendmail(remetente, destinatario, msg.as_string())
+        return True
+    except Exception as e:
+        st.error(f"Erro ao enviar e-mail: {e}")
+        return False
 
 
 # Função para transformar o itinerário em uma lista de dicionários
@@ -321,10 +346,6 @@ def carregar_rvss_int():
 
 
 
-
-
-
-# Função para checar o CPF no login ------------------------------
 def check_cpf(cpf_input):
     # Remover pontos e traços, considerando apenas os números
     cpf_numeros = ''.join(filter(str.isdigit, cpf_input))
@@ -337,9 +358,12 @@ def check_cpf(cpf_input):
     if "usuario" not in st.session_state:
         st.session_state.usuario = None
 
+
     # Verifica se o CPF tem exatamente 11 dígitos
     if len(cpf_numeros) == 11:
-        st.session_state.cpf_inserido = cpf_numeros  # Atualiza CPF no session state
+
+        # Atualiza CPF no session state
+        st.session_state.cpf_inserido = cpf_numeros  
 
         # Busca primeiro nos usuários internos
         df_usuarios_internos = carregar_internos()
@@ -350,6 +374,9 @@ def check_cpf(cpf_input):
         if usuario:
             st.session_state.tipo_usuario = "interno"
             st.session_state.usuario = usuario  # Salva o usuário no session_state
+
+
+            
             return True  # Retorna imediatamente, sem carregar usuários externos
 
 
@@ -371,6 +398,12 @@ def check_cpf(cpf_input):
 
     else:
         return False  # CPF inválido
+
+
+
+# Função para enviar o código de verificação por e-mail e verificar
+def enviar_codigo():
+    st.write('enviar codigo')
 
 
 
@@ -402,7 +435,9 @@ st.write("")
 # ##################################################################
 
 
-def pagina_login():
+
+# Cabeçalho das duas telas de login
+def cabecalho_login():
     # Título
     st.markdown(
         """
@@ -420,6 +455,10 @@ def pagina_login():
     st.write("")
 
 
+# Página de login etapa 1 - CPF
+def pagina_login_etapa_1():
+    cabecalho_login()
+
     # INFORME SEU CPF
     col1, col2, col3 = st.columns([5, 2, 5])    
 
@@ -427,16 +466,69 @@ def pagina_login():
     with col2.form("form_login", border=False):
         cpf_input = st.text_input("Digite seu CPF", placeholder="000.000.000-00")
         if st.form_submit_button("Entrar"):
-            # Verificar o CPF
+            
             resultado = check_cpf(cpf_input)
             
-            if resultado is True:
-                st.session_state.logged_in = True  # Marca que o usuário está logado
-                st.rerun()  # Atualiza a página
+            if resultado:
+                st.session_state.logged_in = "etapa_2_codigo"  # Avança para a etapa 2
+                # st.session_state.usuario = {"cpf": cpf_input}  # Salva o CPF no session_state
+                st.rerun()
             else:
                 st.error("CPF inválido.")
-        # else:
-        #     col2.error("CPF inválido! O CPF deve ter exatamente 11 números.")
+
+
+
+
+
+
+
+
+
+# Página de login etapa  - Código por e-mail
+def pagina_login_etapa_2():
+    if "codigo_enviado" not in st.session_state:
+        st.session_state.codigo_enviado = False
+    if "codigo_verificacao" not in st.session_state:
+        st.session_state.codigo_verificacao = None
+    
+    cabecalho_login()
+
+
+    st.markdown(
+        """
+        <div style="text-align: center;">
+            <strong style="font-size: 1.2em; color: #10a37f;">Foi enviado um código de 3 dígitos para o seu e-mail.</strong>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.write('')
+    st.write('')
+    st.write('')
+
+    col1, col2, col3 = st.columns([5, 2, 5])    
+
+    # Se ainda não há código gerado, cria um novo
+    if not st.session_state.codigo_enviado:
+        st.session_state.codigo_verificacao = str(random.randint(100, 999))  # Garante que seja string
+        
+        # Envia o e-mail
+        if enviar_email(st.session_state.usuario["email"], st.session_state.codigo_verificacao):
+            st.session_state.codigo_enviado = True
+
+    # Solicita o Código
+    with col2.form("codigo_login", border=False):
+        codigo_input = st.text_input("Informe o código recebido", placeholder="000")
+        if st.form_submit_button("Confirmar"):
+            if codigo_input == st.session_state.codigo_verificacao:
+                st.session_state.logged_in = "logado"  # Avança para a home
+                st.rerun()
+            else:
+                st.error("Código inválido.")
+
+
+
 
 
 
@@ -632,13 +724,17 @@ def home_page():
 
 # Verifica se o usuário já está logado
 if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False  # Define o estado de login como falso inicialmente
+    st.session_state.logged_in = "etapa_1_cpf"  # Define o estado de login como falso inicialmente
 
 # Exibe a página de login ou a página principal, dependendo do estado de login
-if st.session_state.logged_in:
-    home_page()  # Página após login
-else:
-    pagina_login()  # Página de login
+if st.session_state.logged_in == "etapa_1_cpf":
+    pagina_login_etapa_1()  
+
+elif st.session_state.logged_in == "etapa_2_codigo":
+    pagina_login_etapa_2()  
+
+elif st.session_state.logged_in == "logado":
+    home_page()  
 
 
 
