@@ -42,14 +42,16 @@ st.markdown(
 # ##################################################################
 
 
-# # Conectar Mongo Atlas
-# # Obtém a string de conexeão do st.secrets
-# MONGODB_URI = st.secrets['mongo_atlas']['MONGO_URI']
-# # Cliente do Mongo Atlas (nuvem)
-# cliente = MongoClient(MONGODB_URI)
+# Conectar Mongo Atlas
+# Obtém a string de conexeão do st.secrets
+MONGODB_URI = st.secrets['senhas']['string_conexao']
+# Cliente do Mongo Atlas (nuvem)
+cliente = MongoClient(MONGODB_URI)
 
 # Conectar ao MongoDB local
-cliente = MongoClient('mongodb://localhost:27017/')  # Cria uma conexão com o banco de dados MongoDB
+# cliente = MongoClient('mongodb://localhost:27017/')  # Cria uma conexão com o banco de dados MongoDB
+
+
 banco_de_dados = cliente["plataforma_sav"]  # Seleciona o banco de dados
 
 
@@ -623,7 +625,7 @@ def pagina_login_etapa_2():
     st.markdown(
         """
         <div style="text-align: center;">
-            <strong style="font-size: 1.2em; color: #10a37f;">Foi enviado um código de 3 dígitos para o seu e-mail.</strong>
+            <strong style="font-size: 1.2em; color: #007ad3;">Foi enviado um código de 3 dígitos para o seu e-mail.</strong>
         </div>
         """,
         unsafe_allow_html=True
