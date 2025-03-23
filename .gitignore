@@ -1,5 +1,5 @@
 env_portal_sav
-.streamlit
+.streamlit/secrets.toml
 credentials.json
 sandbox.py
 aux

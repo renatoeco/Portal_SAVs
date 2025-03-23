@@ -17,7 +17,11 @@ from google.oauth2.service_account import Credentials
 # CONFIGURAÇÕES DA INTERFACE
 # ##################################################################
 
-st.set_page_config(layout="wide")  # Define o layout para ocupar toda a largura
+st.set_page_config(
+    layout="wide", 
+    page_title="Portal de Autorizações de Viagem",
+    # page_icon=logo_url  # Define o layout para ocupar toda a largura
+    )
 
 # CSS para reduzir o espaço no topo da página
 st.markdown(
@@ -59,7 +63,15 @@ scope = [
 ]
 
 # Autenticação usando a conta de serviço
-creds = Credentials.from_service_account_file("/home/renato/Projetos_Python/Portal_SAVs/credentials.json", scopes=scope)
+
+# Ler credenciais do st.secrets
+creds_dict = st.secrets["credentials_drive"]
+# Criar credenciais do Google usando os dados do st.secrets
+creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+
+# creds = Credentials.from_service_account_file("/home/renato/Projetos_Python/Portal_SAVs/credentials.json", scopes=scope)
+
+
 client = gspread.authorize(creds)
 
 # ID da planilha
@@ -311,8 +323,6 @@ def mostrar_detalhes_rvs(row, df_rvss):
     # # st.write(f"**Link para edição:** {link_edicao}")
 
     st.write('')
-
-
 
 
 
@@ -588,10 +598,10 @@ def pagina_login_etapa_1():
                 elif st.session_state.tipo_usuario in ["externo", "interno"]:
 
                     # Atalho para desenvolvedores: loga automaticamente
-                    st.session_state.logged_in = "logado"
+                    # st.session_state.logged_in = "logado"
 
                     # Avançar para a etapa de código caso necessário
-                    # st.session_state.logged_in = "etapa_2_codigo"
+                    st.session_state.logged_in = "etapa_2_codigo"
 
                     st.rerun()
 
@@ -648,8 +658,6 @@ def pagina_login_etapa_2():
 # Página de Cadastrar novo usuário
 # colecao = banco_de_dados["usuarios_externos"]
 def novo_cadastro():
-
-    st.sidebar.write(st.session_state)
 
     cabecalho_login()
 
@@ -711,7 +719,6 @@ def novo_cadastro():
 
 def home_page():
 
-    st.sidebar.write(st.session_state)
 
 # !!!!!!!!!!!!!!
     if st.session_state.tipo_usuario == "interno":
