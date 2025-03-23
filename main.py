@@ -621,11 +621,38 @@ def pagina_login_etapa_2():
     
     cabecalho_login()
 
+    # st.markdown(
+    #     f"""
+    #     <div style="text-align: center;">
+    #         <strong style="font-size: 1.2em; color: #007ad3;">
+    #             Foi enviado um código de 3 dígitos para o seu e-mail.
+    #         </strong>
+    #         <br>
+    #         <br>
+
+    #         <p>{st.session_state.usuario["email"]}</p>
+    #     </div>
+    #     """,
+    #     unsafe_allow_html=True
+    # )
+
 
     st.markdown(
         """
         <div style="text-align: center;">
             <strong style="font-size: 1.2em; color: #007ad3;">Foi enviado um código de 3 dígitos para o seu e-mail.</strong>
+            
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.write('')
+
+    st.markdown(
+        f"""
+        <div style="text-align: center;">
+            <p style="font-size: 1.2em">{st.session_state.usuario["email"]}</p>
         </div>
         """,
         unsafe_allow_html=True
