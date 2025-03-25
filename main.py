@@ -7,6 +7,7 @@ import re
 import random
 import smtplib
 from email.mime.text import MIMEText
+import time
 
 import gspread
 from google.oauth2.service_account import Credentials
@@ -20,7 +21,7 @@ from google.oauth2.service_account import Credentials
 st.set_page_config(
     layout="wide", 
     page_title="Portal de Autorizações de Viagem",
-    # page_icon=logo_url  # Define o layout para ocupar toda a largura
+    # page_icon=logo_url  # Define o favicon
     )
 
 # CSS para reduzir o espaço no topo da página
@@ -71,9 +72,6 @@ creds_dict = st.secrets["credentials_drive"]
 # Criar credenciais do Google usando os dados do st.secrets
 creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
 
-# creds = Credentials.from_service_account_file("/home/renato/Projetos_Python/Portal_SAVs/credentials.json", scopes=scope)
-
-
 client = gspread.authorize(creds)
 
 # ID da planilha
@@ -86,7 +84,7 @@ sheet_id = st.secrets.links.id_sheet_savs_int
 # ##################################################################
 
 
-# Função para enviar e-mail
+# Função para enviar e-mail com código de verificação
 
 def enviar_email(destinatario, codigo):
     remetente = st.secrets["senhas"]["endereco_email"]
@@ -108,39 +106,22 @@ def enviar_email(destinatario, codigo):
     msg["From"] = remetente
     msg["To"] = destinatario
 
+    # Tenta enviar o e-mail com o código de verificação
     try:
+        # Conecta ao servidor de e-mail do Gmail
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            # Faz login com o e-mail e senha do remetente
             server.login(remetente, senha)
+            # Envia o e-mail
             server.sendmail(remetente, destinatario, msg.as_string())
+        # Se der certo, retorna True
         return True
     except Exception as e:
+        # Se der errado, exibe o erro e retorna False
         st.error(f"Erro ao enviar e-mail: {e}")
         return False
 
 
-
-
-
-# def enviar_email(destinatario, codigo):
-#     remetente = st.secrets["senhas"]["endereco_email"]
-#     senha = st.secrets["senhas"]["senha_email"]
-
-#     assunto = "Código de Verificação da Solicitação de Viagem - ISPN"
-#     corpo = f"<p style='font-size: 1.5em; font-weight: bold'>Seu código de verificação é: <strong>{codigo}</strong></p>"
-
-#     msg = MIMEText(corpo)
-#     msg["Subject"] = assunto
-#     msg["From"] = remetente
-#     msg["To"] = destinatario
-
-#     try:
-#         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-#             server.login(remetente, senha)
-#             server.sendmail(remetente, destinatario, msg.as_string())
-#         return True
-#     except Exception as e:
-#         st.error(f"Erro ao enviar e-mail: {e}")
-#         return False
 
 
 # Função para transformar o itinerário em uma lista de dicionários
@@ -270,9 +251,6 @@ def mostrar_detalhes_rvs(row, df_rvss):
     # Selecionando o relatório a partir do código da SAV
     relatorio = df_rvss[df_rvss["Código da viagem:"].str.upper() == row["Código da viagem:"].upper()].iloc[0]
 
-
-
-
     # TRATAMENTO DO LINK DE EDIÇÃO
     sumbission_id = relatorio["Submission ID"]
     link_edicao = f"https://www.jotform.com/edit/{sumbission_id}"
@@ -282,17 +260,12 @@ def mostrar_detalhes_rvs(row, df_rvss):
     with col3.popover("Editar o Relatório", icon=":material/edit:", use_container_width=True):
         st.markdown(f"<a href='{link_edicao}' target='_blank'>Clique aqui para editar o Relatório</a>", unsafe_allow_html=True)
 
-
-
     # INFORMAÇÕES
     st.write(f"**Código da viagem:** {row['Código da viagem:']}")   # Pega o código direto da SAV
-
     st.write(f"**Data do envio do relatório:** {relatorio['Submission Date']}")
     st.write(f"**Fonte de recurso:** {relatorio['Qual é a fonte do recurso?']}")
     st.write(f"**Período da viagem:** {relatorio['Período da viagem:']}")
     st.write(f"**Cidade(s) de destino:** {relatorio['Cidade(s) de destino:']}")
-    
-    
     st.write(f"**Modalidade:** {relatorio['Modalidade:']}")
     st.write(f"**Número de pernoites:** {relatorio['Número de pernoites:']}")
     st.write(f"**Modo de transporte até o destino:** {relatorio['Modo de transporte até o destino:']}")
@@ -312,20 +285,13 @@ def mostrar_detalhes_rvs(row, df_rvss):
         with col:
             st.image(foto)
 
-
     st.write(f"**Documentos anexados:** {relatorio['Faça upload dos anexos:']}")
     st.write(f"**Despesas cobertas pelo anfitrião:** {relatorio['Despesas cobertas pelo anfitrião (descrição e valor):']}")
     # st.write(f"**Submission ID:** {relatorio['Submission ID']}")
 
     st.write(f"**Observações:** {relatorio['Observações gerais:']}")
 
-
-
-
-    # # st.write(f"**Link para edição:** {link_edicao}")
-
     st.write('')
-
 
 
 
@@ -394,14 +360,12 @@ def carregar_rvss_int():
 
     # Filtar SAVs com o prefixo "SAV-"
     df_rvss = df_rvss[df_rvss['Código da viagem:'].str.upper().str.startswith('SAV-')]
-    # df_rvss = df_rvss[df_rvss['Código da viagem:'].str.lower().str.startswith('sav-')]
 
     # Converter as colunas de data para datetime
     df_rvss["Submission Date"] = pd.to_datetime(df_rvss["Submission Date"])  # Garantir que é datetime
     df_rvss["Submission Date"] = df_rvss["Submission Date"].dt.strftime("%d/%m/%Y")  # Converter para string no formato brasileiro
 
     df_rvss = df_rvss.replace({'\$': '\\$'}, regex=True)
-
 
     return df_rvss
 
@@ -410,8 +374,10 @@ def carregar_rvss_int():
 @st.cache_data
 def carregar_savs_ext():
 
+    # Abrir a planilha de SAVs externas
     sheet = client.open_by_key(sheet_id)
 
+    # Ler todos os valores da planilha
     values_savs = sheet.worksheet("SAVs EXTERNAS").get_all_values()
 
     # Criar DataFrame de SAVs. A primeira linha é usada como cabeçalho
@@ -423,9 +389,11 @@ def carregar_savs_ext():
 
     # Filtar SAVs com o prefixo "EXT-"
     df_savs = df_savs[df_savs['Código da viagem:'].str.upper().str.startswith('EXT-')]
-
+   
+    # Substitui o caractere $ por \$ para que o Streamlit possa exibir corretamente
     df_savs = df_savs.replace({'\$': '\\$'}, regex=True)
 
+    # Renomeia as colunas para que tenham nomes mais legíveis
     df_savs.rename(columns={'Insira aqui os seus deslocamentos. Cada trecho em uma nova linha:': 'Itinerário:',
                             'Nome do ponto focal no ISPN (a pessoa que está convidando)': 'Ponto focal:'}, inplace=True)
 
@@ -436,8 +404,10 @@ def carregar_savs_ext():
 @st.cache_data
 def carregar_rvss_ext():
 
+    # Abrir a planilha de RVSs externas
     sheet = client.open_by_key(sheet_id)
 
+    # Ler todos os valores da planilha
     # values_rvss = sheet.worksheet("TESTE RENATO SAVs").get_all_values()
     values_rvss = sheet.worksheet("RVSs EXTERNOS").get_all_values()
 
@@ -446,7 +416,6 @@ def carregar_rvss_ext():
 
     # Filtar SAVs com o prefixo "SAV-"
     df_rvss = df_rvss[df_rvss['Código da viagem:'].str.upper().str.startswith('SAV-')]
-    # df_rvss = df_rvss[df_rvss['Código da viagem:'].str.lower().str.startswith('sav-')]
 
     # Converter as colunas de data para datetime
     df_rvss["Submission Date"] = pd.to_datetime(df_rvss["Submission Date"])  # Garantir que é datetime
@@ -454,13 +423,7 @@ def carregar_rvss_ext():
 
     df_rvss = df_rvss.replace({'\$': '\\$'}, regex=True)
 
-
     return df_rvss
-
-
-
-
-
 
 
 
@@ -488,11 +451,15 @@ def check_cpf(cpf_input):
         # Verifica se existe um usuário interno com o CPF informado
         usuario_interno = df_usuarios_internos[df_usuarios_internos["cpf"] == cpf_numeros]
         
-        if not usuario_interno.empty:  # Se encontrou pelo menos um resultado
+        # Se encontrou pelo menos um resultado, o CPF é de um usuário interno
+        if not usuario_interno.empty:  
+            # Recupera o dicionário do usuário interno
             usuario = usuario_interno.iloc[0].to_dict()
+            # Atualiza o tipo de usuário e o usuário no session state
             st.session_state.tipo_usuario = "interno"
             st.session_state.usuario = usuario  
-            return True  # Retorna imediatamente, sem carregar usuários externos
+            # Retorna True, sem precisar carregar os usuários externos
+            return True
 
         # Se não for interno, busca nos usuários externos
         df_usuarios_externos = carregar_externos()
@@ -514,13 +481,6 @@ def check_cpf(cpf_input):
     else:
         return False  # CPF inválido
 
-
-
-
-
-# Função para enviar o código de verificação por e-mail e verificar
-def enviar_codigo():
-    st.write('enviar codigo')
 
 
 
@@ -588,18 +548,19 @@ def pagina_login_etapa_1():
             resultado = check_cpf(cpf_input)
             
             if resultado:
-                
-                
+
+                # Se o CPF é novo, vai para a página de cadastro
                 if st.session_state.tipo_usuario == "novo":
                     st.session_state.logged_in = "novo_cadastro"
 
+                    # Força a atualização da página
                     st.rerun()
 
 
                 # Se o usuário for externo ou interno
                 elif st.session_state.tipo_usuario in ["externo", "interno"]:
 
-                    # Atalho para desenvolvedores: loga automaticamente
+                    # Atalho para desenvolvedores: loga automaticamente >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
                     # st.session_state.logged_in = "logado"
 
                     # Avançar para a etapa de código caso necessário
@@ -609,6 +570,7 @@ def pagina_login_etapa_1():
 
     
             else:
+                # Se o CPF for inválido, exibe mensagem de erro
                 st.error("CPF inválido.")
 
 
@@ -619,24 +581,10 @@ def pagina_login_etapa_2():
     if "codigo_verificacao" not in st.session_state:
         st.session_state.codigo_verificacao = None
     
+    # Exibe o cabeçalho com o título
     cabecalho_login()
 
-    # st.markdown(
-    #     f"""
-    #     <div style="text-align: center;">
-    #         <strong style="font-size: 1.2em; color: #007ad3;">
-    #             Foi enviado um código de 3 dígitos para o seu e-mail.
-    #         </strong>
-    #         <br>
-    #         <br>
-
-    #         <p>{st.session_state.usuario["email"]}</p>
-    #     </div>
-    #     """,
-    #     unsafe_allow_html=True
-    # )
-
-
+    # Informa que o código foi enviado para o e-mail
     st.markdown(
         """
         <div style="text-align: center;">
@@ -649,6 +597,7 @@ def pagina_login_etapa_2():
 
     st.write('')
 
+    # Exibe o e-mail do usuário
     st.markdown(
         f"""
         <div style="text-align: center;">
@@ -662,6 +611,7 @@ def pagina_login_etapa_2():
     st.write('')
     st.write('')
 
+    # Divide a tela em 3 colunas
     col1, col2, col3 = st.columns([5, 2, 5])    
 
     # Se ainda não há código gerado, cria um novo
@@ -685,17 +635,20 @@ def pagina_login_etapa_2():
 
 
 # Página de Cadastrar novo usuário
-# colecao = banco_de_dados["usuarios_externos"]
 def novo_cadastro():
 
+    # Exibe o cabeçalho da página de novo cadastro
     cabecalho_login()
 
+    # Cria colunas na tela
     col1, col2, col3 = st.columns([2, 2, 2])
 
+    # Adiciona um subtítulo para o cadastro
     col2.subheader("Novo cadastro")
   
     with col2.form(key='form_usuario'):
         
+        # Campos do formulário para o usuário preencher
         nome_completo = st.text_input("Nome Completo")
         data_nascimento = st.date_input("Data de Nascimento", format="DD/MM/YYYY", value=None)
         cpf = st.text_input("CPF", value=st.session_state.cpf_inserido if st.session_state.cpf_inserido else "")
@@ -704,40 +657,49 @@ def novo_cadastro():
         telefone = st.text_input("Telefone")
         email = st.text_input("E-mail")
         
+        # Dados bancários do usuário
         st.write("**Dados Bancários**")
         banco_nome = st.text_input("Nome do Banco")
         agencia = st.text_input("Agência")
         conta = st.text_input("Conta")
         tipo_conta = st.selectbox("Tipo de Conta", ["Conta Corrente", "Poupança"])
         
+        # Botão de submissão
         submit_button = st.form_submit_button("Cadastrar", type="primary")
         
         if submit_button:
+            # Verifica se todos os campos estão preenchidos
             if not all([nome_completo, data_nascimento, cpf, genero, rg, telefone, email, banco_nome, agencia, conta, tipo_conta]):
                 st.error("Por favor, preencha todos os campos.")
             else:
+                # Insere um novo usuário na coleção do banco de dados
                 colecao = banco_de_dados["usuarios_externos"]
 
+                # Cria um dicionário com os dados do novo usuário
                 novo_usuario = {
                     "nome_completo": nome_completo,
-                    "data_nascimento": data_nascimento.strftime("%d/%m/%Y"),
+                    "data_nascimento": data_nascimento.strftime("%d/%m/%Y"),  # Formata a data no formato "DD/MM/YYYY"
                     "cpf": cpf,
                     "genero": genero,
                     "rg": rg,
                     "telefone": telefone,
                     "email": email,
-                    "banco": {
+                    "banco": {  # Dicionário com os dados bancários
                         "nome": banco_nome,
                         "agencia": agencia,
                         "conta": conta,
                         "tipo": tipo_conta
                     }
                 }
+                # Insere o novo usuário na coleção do banco de dados
                 colecao.insert_one(novo_usuario)
+
+                # Atualiza o estado da sessão com o novo usuário
                 st.session_state.usuario = novo_usuario
                 st.session_state.tipo_usuario = "externo"
                 st.session_state.logged_in = "etapa_2_codigo"
 
+                # Recarrega a aplicação
                 st.rerun()
 
 
@@ -750,11 +712,14 @@ def home_page():
 
 
 # !!!!!!!!!!!!!!
+    # Carregar dados com base no tipo de usuário
     if st.session_state.tipo_usuario == "interno":
+        # Usuário interno: carrega SAVs e RVSs internas
         df_savs = carregar_savs_int()
         df_rvss = carregar_rvss_int()
 
     elif st.session_state.tipo_usuario == "externo":
+        # Usuário externo: carrega SAVs e RVSs externas
         df_savs = carregar_savs_ext()
         df_rvss = carregar_rvss_ext()
 
@@ -768,7 +733,7 @@ def home_page():
     
 
     # Cria colunas para o nome do usuário e o botão atualizar
-    col1, col2 = st.columns([8, 1])
+    col1, col2, col3 = st.columns([8, 2, 2])
 
     # Exibe o nome do usuário
     col1.markdown(
@@ -780,8 +745,164 @@ def home_page():
         unsafe_allow_html=True
     )
 
+
+    # Botão meu cadastro
+    @st.dialog("Meu cadastro")
+    def meu_cadastro():
+        with st.form("meu_cadastro"):
+            
+            # Obtém o CPF numérico do usuário
+            usuario_cpf_numerico = "".join(filter(str.isdigit, usuario['cpf']))
+
+            # Busca os dados do usuário no banco de dados com o CPF
+            usuario_no_banco = banco_de_dados["usuarios_internos"].find_one({"cpf": usuario_cpf_numerico})
+
+            # Exibe o CPF, com a formatação
+            cpf_input = st.text_input("CPF", value=f"{usuario['cpf'][:3]}.{usuario['cpf'][3:6]}.{usuario['cpf'][6:9]}-{usuario['cpf'][9:]}", disabled=True)
+
+            # Exibe os campos de dados do usuário, com valores padrão se não existirem no banco
+            nome_input = st.text_input("Nome Completo", value=usuario.get("nome_completo", ""))
+            email_input = st.text_input("E-mail", value=usuario.get("email", ""))
+            telefone_input = st.text_input("Telefone", value=usuario.get("telefone", "") if pd.notna(usuario.get("telefone")) else "")
+
+            # Exibe o campo de data de nascimento com valor vazio se não encontrado no banco
+            data_nascimento_input = st.text_input("Data de Nascimento", value=usuario.get("data_nascimento", "") if pd.notna(usuario.get("data_nascimento")) else "")
+
+            # Exibe a seleção de gênero com valor padrão se não encontrado
+            genero_input = st.selectbox(
+                "Gênero",
+                ["", "Masculino", "Feminino", "Outro"],
+                index=["", "Masculino", "Feminino", "Outro"].index(usuario.get("genero", ""))
+                if usuario.get("genero") in ["Masculino", "Feminino", "Outro"] else 0
+            )
+
+            # Exibe o campo de RG e órgão emissor com valor vazio se não encontrado
+            rg_input = st.text_input("RG e órgão emissor", value=usuario.get("rg", "") if pd.notna(usuario.get("rg")) else "")
+            
+            # Exibe o campo de e-mail do coordenador com valor vazio se não encontrado
+            email_coordenador_input = st.text_input("E-mail do(a) Coordenador(a)", value=usuario.get("email_coordenador", "") if pd.notna(usuario.get("email_coordenador")) else "")
+
+            st.write('')
+            st.write("**Dados Bancários**")
+
+            # Verifica se a chave 'banco' existe no cadastro do usuário
+            if 'banco' in usuario_no_banco:  # Verifica se a chave 'banco' existe no cadastro
+                # Exibe os campos bancários com dados do banco, se existir
+                banco_nome_input = st.text_input("Banco", value=usuario_no_banco.get("banco", {}).get("nome", ""))
+                banco_agencia_input = st.text_input("Agência", value=usuario_no_banco.get("banco", {}).get("agencia", ""))
+                banco_conta_input = st.text_input("Conta", value=usuario_no_banco.get("banco", {}).get("conta", ""))
+                banco_tipo_input = st.selectbox(
+                    "Tipo de Conta", 
+                    ["Conta Corrente", "Conta Poupança", "Conta Salário"], 
+                    index=["Conta Corrente", "Conta Poupança", "Conta Salário"].index(usuario_no_banco.get("banco", {}).get("tipo", ""))
+                )
+            else:
+                # Se não existir a chave 'banco', os campos bancários são exibidos vazios
+                banco_nome_input = st.text_input("Banco", value="")
+                banco_agencia_input = st.text_input("Agência", value="")
+                banco_conta_input = st.text_input("Conta", value="")
+                banco_tipo_input = st.selectbox(
+                    "Tipo de Conta", 
+                    ["Conta Corrente", "Conta Poupança", "Conta Salário"], 
+                    index=0  # Por padrão, seleciona o primeiro valor (Conta Corrente)
+                )
+
+            st.write('')
+            # Ao clicar no botão de "Atualizar cadastro", realiza a atualização dos dados
+            if st.form_submit_button("Atualizar cadastro", icon=":material/refresh:", type="primary"):
+                atualizacoes = {}
+                
+                # Verifica se o usuário foi encontrado no banco de dados
+                if usuario_no_banco:
+                    # Atualiza o nome completo
+                    if nome_input != usuario_no_banco.get("nome_completo", ""):
+                        atualizacoes["nome_completo"] = nome_input
+                        usuario["nome_completo"] = nome_input
+                    
+                    # Atualiza o e-mail se for válido
+                    if email_input != usuario_no_banco.get("email", ""):
+                        if re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", email_input):
+                            atualizacoes["email"] = email_input
+                            usuario["email"] = email_input
+                        else:
+                            st.error("E-mail inválido. Insira um endereço válido.")
+                            return
+                    
+                    # Atualiza o telefone se for válido
+                    if telefone_input != usuario_no_banco.get("telefone", ""):
+                        telefone_numerico = "".join(filter(str.isdigit, telefone_input))
+                        if len(telefone_numerico) < 10 or len(telefone_numerico) > 11:
+                            st.error("Telefone inválido. Insira um telefone válido com DDD e número.")
+                            return
+                        atualizacoes["telefone"] = telefone_input
+                        usuario["telefone"] = telefone_input
+                    
+                    # Atualiza a data de nascimento se for válida
+                    if data_nascimento_input != usuario_no_banco.get("data_nascimento", ""):
+                        data_numerica = "".join(filter(str.isdigit, data_nascimento_input))
+                        if len(data_numerica) != 8:
+                            st.error("Data de nascimento inválida. Insira uma data no formato DD/MM/YYYY.")
+                            return
+                        atualizacoes["data_nascimento"] = data_nascimento_input
+                        usuario["data_nascimento"] = data_nascimento_input
+                    
+                    # Atualiza o gênero
+                    if genero_input != usuario_no_banco.get("genero", ""):
+                        atualizacoes["genero"] = genero_input
+                        usuario["genero"] = genero_input
+                    
+                    # Atualiza o RG e órgão emissor
+                    if rg_input != usuario_no_banco.get("rg", ""):
+                        atualizacoes["rg"] = rg_input
+                        usuario["rg"] = rg_input
+
+                    # Atualiza o e-mail do coordenador se for válido
+                    if email_coordenador_input != usuario_no_banco.get("email_coordenador", ""):
+                        if re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", email_coordenador_input):
+                            atualizacoes["email_coordenador"] = email_coordenador_input
+                            usuario["email_coordenador"] = email_coordenador_input
+                        else:
+                            st.error("E-mail do coordenador inválido. Insira um endereço válido.")
+                            return
+
+
+                    banco_atualizacoes = {}
+                    # Atualiza os dados bancários se forem diferentes
+                    if banco_nome_input != usuario_no_banco.get("banco", {}).get("nome", ""):
+                        banco_atualizacoes["nome"] = banco_nome_input
+                    if banco_agencia_input != usuario_no_banco.get("banco", {}).get("agencia", ""):
+                        banco_atualizacoes["agencia"] = banco_agencia_input
+                    if banco_conta_input != usuario_no_banco.get("banco", {}).get("conta", ""):
+                        banco_atualizacoes["conta"] = banco_conta_input
+                    if banco_tipo_input != usuario_no_banco.get("banco", {}).get("tipo", ""):
+                        banco_atualizacoes["tipo"] = banco_tipo_input
+                    
+                    # Se houver atualizações no banco, aplica as alterações
+                    if banco_atualizacoes:
+                        atualizacoes["banco"] = {**usuario_no_banco.get("banco", {}), **banco_atualizacoes}
+                        usuario["banco"] = atualizacoes["banco"]
+                    
+                    # Atualiza o cadastro no banco de dados
+                    banco_de_dados["usuarios_internos"].update_one(
+                        {"cpf": usuario_cpf_numerico},
+                        {"$set": atualizacoes}
+                    )
+                    # Se a atualização foi realizada com sucesso, exibe uma mensagem de sucesso
+                    # e recarrega a página após alguns segundos
+                    st.success("Cadastro atualizado com sucesso!")
+                    time.sleep(3)
+                    st.rerun()
+                else:
+                    # Se não houver nenhum usuário com o CPF informado, exibe uma mensagem de erro
+                    st.error("Usuário não encontrado.")
+                    
+    # Botão de acesso ao Meu cadastro
+    if col2.button("Meu cadastro", icon=":material/person:", use_container_width=True):
+        meu_cadastro()
+
+
     # Botão para atualizar a página
-    if col2.button("Atualizar", icon=":material/refresh:", use_container_width=True):
+    if col3.button("Atualizar", icon=":material/refresh:", use_container_width=True):
         # Limpa o session_state e o cache, e recarrega a página
         st.session_state.status_usuario = ""
         st.cache_data.clear()
@@ -797,8 +918,6 @@ def home_page():
     # ABA MINHAS VIAGENS
 
     with minhas_viagens:
-        # df_savs = carregar_savs_int()
-        # df_rvss = carregar_rvss_int()
 
         # Limpar a coluna CPF: quero apenas os números
         df_savs['CPF:'] = df_savs['CPF:'].str.replace(r'[^\d]+', '', regex=True)
@@ -809,8 +928,6 @@ def home_page():
         # Capturar a data da viagem
         df_savs['Data da viagem:'] = df_savs['Itinerário:'].str[6:16].replace('-', '/', regex=True)
 
-        # Capturar todos os destinos
-        # Expressão regular para capturar o que está entre "Cidade de chegada: " e ","
 
 # !!!!!!!!!!!!!!
         if st.session_state.tipo_usuario == "interno":
@@ -824,7 +941,7 @@ def home_page():
 
     
         # Criar cabeçalho da "tabela"
-        col1, col2, col3, col4, col5 = st.columns([2, 2, 7, 2, 2])
+        col1, col2, col3, col4, col5 = st.columns([2, 2, 7, 3, 3])
 
         col1.write('**Código da viagem**')
         col2.write('**Data da viagem**')
@@ -832,11 +949,8 @@ def home_page():
         # col4.write('**SAVs**')
         # col5.write('**Relatórios**')
 
-
         # Iniciar a variável na session_state que vai identificar se o usuário está impedido ou não de enviar relatório (se tem algum pendente)
         st.session_state.status_usuario = ""
-
-
 
         # Iterar sobre a lista de viagens
         for index, row in df_savs[::-1].iterrows():
@@ -851,6 +965,7 @@ def home_page():
             data_inicial = trechos[0]["Data"]
             data_final = trechos[-1]["Data"]
 
+            # Formata a data do período da viagem para o formato DD/MM/YYYY a DD/MM/YYYY
             periodo_viagem = f"{data_inicial} a {data_final}".replace('-', '/')
 
 # !!!!!!!!!!!!!!!!!!!!
@@ -897,8 +1012,9 @@ def home_page():
                 # Se a data_final da viagem menor do que hoje, o usuário está impedido
                 if pd.to_datetime(data_final, dayfirst=True).timestamp() < pd.to_datetime(date.today()).timestamp():
                 
+                    # Impede o usuário de enviar uma nova solicitação se tiver relatório pendente
                     st.session_state.status_usuario = "impedido"
-
+                    
 
             # Se o relatório foi entregue, vê o relatório  
             if status_relatorio == "entregue":
@@ -907,12 +1023,11 @@ def home_page():
             # Se não foi entregue, botão para enviar
             # else:
             if status_relatorio == "pendente":
+                # Se não foi entregue, botão para enviar
                 with col5.popover('Enviar relatório', use_container_width=True, icon=":material/description:"):
                     st.markdown(f"<a href='{jotform_rvs_url}' target='_blank'>Clique aqui para enviar o relatório</a>", unsafe_allow_html=True)
 
-
             st.divider()  # Separador entre cada linha da tabela
-
 
 
 
@@ -943,8 +1058,27 @@ def home_page():
         else:
             # Verifica o tipo de usuário e gera a URL apropriada para o formulário de solicitação de viagem
             if st.session_state.tipo_usuario == "interno":
-                # URL do formulário de SAV interna
-                jotform_sav_url = f"{st.secrets['links']['url_sav_int']}?nomeCompleto={usuario['nome_completo']}&dataDe={usuario['data_nascimento']}&genero={usuario['genero']}&rg={usuario['rg']}&cpf={usuario['cpf']}&telefone={usuario['telefone']}&email={usuario['email']}&emailDoa={usuario['email_coordenador']}&banco={usuario['banco']['nome']}&agencia={usuario['banco']['agencia']}&conta={usuario['banco']['conta']}"
+
+                # Tratamento quando não há todos os dados da pessoa no BD
+
+                def safe_get(dicionario, chave, default=""):
+                    # Obtém o valor da chave no dicionário, ou um valor padrão se a chave não existir
+                    valor = dicionario.get(chave, default)
+                    
+                    # Verifica se o valor é NaN (Not a Number) usando pandas.isna()
+                    # Se for NaN, retorna uma string vazia
+                    # Caso contrário, retorna o valor normalmente
+                    return "" if pd.isna(valor) else valor
+
+                # import math
+                # def safe_get(dicionario, chave, default=""):
+                #     valor = dicionario.get(chave, default)
+                #     return "" if isinstance(valor, float) and math.isnan(valor) else valor
+
+
+                banco_info = safe_get(usuario, 'banco', {}) if isinstance(usuario.get('banco'), dict) else {}
+                jotform_sav_url = f"{st.secrets['links']['url_sav_int']}?nomeCompleto={safe_get(usuario, 'nome_completo')}&dataDe={safe_get(usuario, 'data_nascimento')}&genero={safe_get(usuario, 'genero')}&rg={safe_get(usuario, 'rg')}&cpf={safe_get(usuario, 'cpf')}&telefone={safe_get(usuario, 'telefone')}&email={safe_get(usuario, 'email')}&emailDoa={safe_get(usuario, 'email_coordenador')}&banco={safe_get(banco_info, 'nome')}&agencia={safe_get(banco_info, 'agencia')}&conta={safe_get(banco_info, 'conta')}"
+
 
             elif st.session_state.tipo_usuario == "externo":
                 # URL do formulário de SAV externa
@@ -952,14 +1086,6 @@ def home_page():
 
             # Exibe o formulário em um iframe
             st.components.v1.iframe(jotform_sav_url, width=None, height=4000)
-
-
-
-
-
-
-    # elif st.session_state.tipo_usuario == "externo":
-
 
 
 
@@ -983,10 +1109,13 @@ if st.session_state.logged_in == "etapa_1_cpf":
 elif st.session_state.logged_in == "etapa_2_codigo":
     pagina_login_etapa_2()  
 
+# Usuário está logado, exibe a página inicial
 elif st.session_state.logged_in == "logado":
     home_page()  
 
+# Usuário novo, exibe a página de cadastro
 elif st.session_state.logged_in == "novo_cadastro":
     novo_cadastro()
+
 
 
