@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 from pymongo import MongoClient
@@ -322,7 +321,7 @@ def carregar_externos():
 
 
 # Carregar SAVs internas no google sheets ------------------------------
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def carregar_savs_int():
 
     sheet = client.open_by_key(sheet_id)
@@ -347,7 +346,7 @@ def carregar_savs_int():
 
 
 # Carregar RVSs internos no google sheets ------------------------------
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def carregar_rvss_int():
 
     sheet = client.open_by_key(sheet_id)
@@ -371,7 +370,7 @@ def carregar_rvss_int():
 
 
 # Carregar SAVs externas no google sheets ------------------------------
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def carregar_savs_ext():
 
     # Abrir a planilha de SAVs externas
@@ -401,7 +400,7 @@ def carregar_savs_ext():
 
 
 # Carregar RVSs externos no google sheets ------------------------------
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def carregar_rvss_ext():
 
     # Abrir a planilha de RVSs externas
