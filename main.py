@@ -206,7 +206,7 @@ def mostrar_detalhes_sav(row):
     # Botão de editar
     if st.session_state.tipo_usuario == "interno":
         with col3.popover("Editar a SAV", icon=":material/edit:", use_container_width=True):
-            st.markdown(f"<a href='{link_edicao}' target='_blank'>Clique aqui para editar a SAV</a>", unsafe_allow_html=True)
+            st.markdown(f"<a href='{link_edicao}' target='_blank'>Clique aqui para editar</a>", unsafe_allow_html=True)
 
 
     # INFORMAÇÕES
@@ -257,7 +257,7 @@ def mostrar_detalhes_rvs(row, df_rvss):
     col1, col2, col3 = st.columns([1, 1, 1])
 
     with col3.popover("Editar o Relatório", icon=":material/edit:", use_container_width=True):
-        st.markdown(f"<a href='{link_edicao}' target='_blank'>Clique aqui para editar o Relatório</a>", unsafe_allow_html=True)
+        st.markdown(f"<a href='{link_edicao}' target='_blank'>Clique aqui para editar</a>", unsafe_allow_html=True)
 
     # INFORMAÇÕES
     st.write(f"**Código da viagem:** {row['Código da viagem:']}")   # Pega o código direto da SAV
@@ -325,9 +325,10 @@ def carregar_externos():
 def carregar_savs_int():
 
     sheet = client.open_by_key(sheet_id)
-
+    
+    values_savs = sheet.worksheet("SAVs Internas Portal").get_all_values()
     # values_savs = sheet.worksheet("TESTE RENATO SAVs").get_all_values()
-    values_savs = sheet.worksheet("Recebimento de SAVs").get_all_values()
+    # values_savs = sheet.worksheet("Recebimento de SAVs").get_all_values()
 
     # Criar DataFrame de SAVs. A primeira linha é usada como cabeçalho
     df_savs = pd.DataFrame(values_savs[1:], columns=values_savs[0])
@@ -413,8 +414,8 @@ def carregar_rvss_ext():
     # Criar DataFrame de RVSs. A primeira linha é usada como cabeçalho
     df_rvss = pd.DataFrame(values_rvss[1:], columns=values_rvss[0])
 
-    # Filtar SAVs com o prefixo "SAV-"
-    df_rvss = df_rvss[df_rvss['Código da viagem:'].str.upper().str.startswith('SAV-')]
+    # Filtar SAVs com o prefixo "EXT-"
+    df_rvss = df_rvss[df_rvss['Código da viagem:'].str.upper().str.startswith('EXT-')]
 
     # Converter as colunas de data para datetime
     df_rvss["Submission Date"] = pd.to_datetime(df_rvss["Submission Date"])  # Garantir que é datetime
@@ -746,61 +747,81 @@ def home_page():
 
 
     # Botão meu cadastro
-    @st.dialog("Meu cadastro")
+    @st.dialog("Meu cadastro", width="large")
     def meu_cadastro():
         with st.form("meu_cadastro"):
             
+
             # Obtém o CPF numérico do usuário
             usuario_cpf_numerico = "".join(filter(str.isdigit, usuario['cpf']))
 
             # Busca os dados do usuário no banco de dados com o CPF
             usuario_no_banco = banco_de_dados["usuarios_internos"].find_one({"cpf": usuario_cpf_numerico})
 
-            # Exibe o CPF, com a formatação
-            cpf_input = st.text_input("CPF", value=f"{usuario['cpf'][:3]}.{usuario['cpf'][3:6]}.{usuario['cpf'][6:9]}-{usuario['cpf'][9:]}", disabled=True)
 
-            # Exibe os campos de dados do usuário, com valores padrão se não existirem no banco
-            nome_input = st.text_input("Nome Completo", value=usuario.get("nome_completo", ""))
-            email_input = st.text_input("E-mail", value=usuario.get("email", ""))
-            telefone_input = st.text_input("Telefone", value=usuario.get("telefone", "") if pd.notna(usuario.get("telefone")) else "")
+            col1, espaco, col2 = st.columns([12, 1, 12])
 
-            # Exibe o campo de data de nascimento com valor vazio se não encontrado no banco
-            data_nascimento_input = st.text_input("Data de Nascimento", value=usuario.get("data_nascimento", "") if pd.notna(usuario.get("data_nascimento")) else "")
 
-            # Exibe a seleção de gênero com valor padrão se não encontrado
-            genero_input = st.selectbox(
+            # COLUNA 1
+
+            # 1. Exibe o CPF, com a formatação
+            cpf_input = col1.text_input("CPF", value=f"{usuario['cpf'][:3]}.{usuario['cpf'][3:6]}.{usuario['cpf'][6:9]}-{usuario['cpf'][9:]}", disabled=True)
+
+            # 2. Nome
+            nome_input = col1.text_input("Nome Completo", value=usuario.get("nome_completo", ""))
+            
+            #  3. Data de nascimento
+            data_nascimento_input = col1.text_input("Data de Nascimento", value=usuario.get("data_nascimento", "") if pd.notna(usuario.get("data_nascimento")) else "")
+
+            #  4. e-mail
+            email_input = col1.text_input("E-mail", value=usuario.get("email", ""))
+            
+            # 5. Banco
+            # Ver bloco abaixo
+
+
+
+            # COLUNA 2
+
+            # 1. Exibe o campo de RG e órgão emissor com valor vazio se não encontrado
+            rg_input = col2.text_input("RG e órgão emissor", value=usuario.get("rg", "") if pd.notna(usuario.get("rg")) else "")
+
+            # 2. Gênero
+            genero_input = col2.selectbox(
                 "Gênero",
                 ["", "Masculino", "Feminino", "Outro"],
                 index=["", "Masculino", "Feminino", "Outro"].index(usuario.get("genero", ""))
                 if usuario.get("genero") in ["Masculino", "Feminino", "Outro"] else 0
             )
 
-            # Exibe o campo de RG e órgão emissor com valor vazio se não encontrado
-            rg_input = st.text_input("RG e órgão emissor", value=usuario.get("rg", "") if pd.notna(usuario.get("rg")) else "")
-            
-            # Exibe o campo de e-mail do coordenador com valor vazio se não encontrado
-            email_coordenador_input = st.text_input("E-mail do(a) Coordenador(a)", value=usuario.get("email_coordenador", "") if pd.notna(usuario.get("email_coordenador")) else "")
+            #  3. Telefone
+            telefone_input = col2.text_input("Telefone", value=usuario.get("telefone", "") if pd.notna(usuario.get("telefone")) else "")
 
-            st.write('')
-            st.write("**Dados Bancários**")
+            # 4. E-mail do coordenador
+            email_coordenador_input = col2.text_input("E-mail do(a) Coordenador(a)", value=usuario.get("email_coordenador", "") if pd.notna(usuario.get("email_coordenador")) else "")
 
+            # col2.write('')
+            # col2.write("**Dados Bancários**")
+
+
+            #  5. Banco
             # Verifica se a chave 'banco' existe no cadastro do usuário
             if 'banco' in usuario_no_banco:  # Verifica se a chave 'banco' existe no cadastro
                 # Exibe os campos bancários com dados do banco, se existir
-                banco_nome_input = st.text_input("Banco", value=usuario_no_banco.get("banco", {}).get("nome", ""))
-                banco_agencia_input = st.text_input("Agência", value=usuario_no_banco.get("banco", {}).get("agencia", ""))
-                banco_conta_input = st.text_input("Conta", value=usuario_no_banco.get("banco", {}).get("conta", ""))
-                banco_tipo_input = st.selectbox(
+                banco_nome_input = col1.text_input("Banco", value=usuario_no_banco.get("banco", {}).get("nome", ""))
+                banco_agencia_input = col2.text_input("Agência", value=usuario_no_banco.get("banco", {}).get("agencia", ""))
+                banco_conta_input = col2.text_input("Conta", value=usuario_no_banco.get("banco", {}).get("conta", ""))
+                banco_tipo_input = col1.selectbox(
                     "Tipo de Conta", 
                     ["Conta Corrente", "Conta Poupança", "Conta Salário"], 
                     index=["Conta Corrente", "Conta Poupança", "Conta Salário"].index(usuario_no_banco.get("banco", {}).get("tipo", ""))
                 )
             else:
                 # Se não existir a chave 'banco', os campos bancários são exibidos vazios
-                banco_nome_input = st.text_input("Banco", value="")
-                banco_agencia_input = st.text_input("Agência", value="")
-                banco_conta_input = st.text_input("Conta", value="")
-                banco_tipo_input = st.selectbox(
+                banco_nome_input = col1.text_input("Banco", value="")
+                banco_agencia_input = col2.text_input("Agência", value="")
+                banco_conta_input = col2.text_input("Conta", value="")
+                banco_tipo_input = col1.selectbox(
                     "Tipo de Conta", 
                     ["Conta Corrente", "Conta Poupança", "Conta Salário"], 
                     index=0  # Por padrão, seleciona o primeiro valor (Conta Corrente)
