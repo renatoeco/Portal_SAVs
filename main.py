@@ -254,10 +254,11 @@ def mostrar_detalhes_rvs(row, df_rvss):
     sumbission_id = relatorio["Submission ID"]
     link_edicao = f"https://www.jotform.com/edit/{sumbission_id}"
 
-    # col1, col2, col3 = st.columns([1, 1, 1])
 
-    # with col3.popover("Editar o Relatório", icon=":material/edit:", use_container_width=True):
-    #     st.markdown(f"<a href='{link_edicao}' target='_blank'>Clique aqui para editar</a>", unsafe_allow_html=True)
+    # Botão para editar o relatório
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col3.popover("Editar o Relatório", icon=":material/edit:", use_container_width=True):
+        st.markdown(f"<a href='{link_edicao}' target='_blank'>Clique aqui para editar</a>", unsafe_allow_html=True)
 
     # INFORMAÇÕES
     st.write(f"**Código da viagem:** {row['Código da viagem:']}")   # Pega o código direto da SAV
@@ -265,12 +266,16 @@ def mostrar_detalhes_rvs(row, df_rvss):
     st.write(f"**Fonte de recurso:** {relatorio['Qual é a fonte do recurso?']}")
     st.write(f"**Período da viagem:** {relatorio['Período da viagem:']}")
     st.write(f"**Cidade(s) de destino:** {relatorio['Cidade(s) de destino:']}")
-    st.write(f"**Modalidade:** {relatorio['Modalidade:']}")
+
+# !!!!!!!!!!!!!!!!!!!
+    if st.session_state.tipo_usuario == "interno":
+        st.write(f"**Modalidade:** {relatorio['Modalidade:']}")
+        st.write(f"**Modo de transporte até o destino:** {relatorio['Modo de transporte até o destino:']}")
+        st.write(f"**Despesas cobertas pelo anfitrião (descrição e valor):** {relatorio['Despesas cobertas pelo anfitrião (descrição e valor):']}")
+
     st.write(f"**Número de pernoites:** {relatorio['Número de pernoites:']}")
-    st.write(f"**Modo de transporte até o destino:** {relatorio['Modo de transporte até o destino:']}")
-    st.write(f"**Valor gasto com transporte no destino:** {relatorio['Valor gasto com transporte no destino (R$):']}")
     st.write(f"**Valor das diárias recebidas:** {relatorio['Valor das diárias recebidas (R$):']}")
-    st.write(f"**Despesas cobertas pelo anfitrião (descrição e valor):** {relatorio['Despesas cobertas pelo anfitrião (descrição e valor):']}")
+    st.write(f"**Valor gasto com transporte no destino:** {relatorio['Valor gasto com transporte no destino (R$):']}")
     st.write(f"**Atividades realizadas na viagem:** {relatorio['Descreva as atividades realizadas na viagem:']}")
     st.write(f"**Principais Resultados / Produtos:** {relatorio['Principais Resultados / Produtos:']}")
 
@@ -316,7 +321,6 @@ def carregar_internos():
     return df_usuarios_internos
 
 
-
 # Cerregar usuários externos no banco de dados ------------------------------
 def carregar_externos():
     # criar um dataframe com os usuários internos
@@ -326,6 +330,7 @@ def carregar_externos():
     df_usuarios_externos["cpf"] = df_usuarios_externos["cpf"].astype(str).str.replace(r"\D", "", regex=True)
 
     return df_usuarios_externos
+
 
 
 # Carregar SAVs internas no google sheets ------------------------------
@@ -760,12 +765,16 @@ def home_page():
             # Obtém o CPF numérico do usuário
             usuario_cpf_numerico = "".join(filter(str.isdigit, usuario['cpf']))
 
-            # Busca os dados do usuário no banco de dados com o CPF
-            usuario_no_banco = banco_de_dados["usuarios_internos"].find_one({"cpf": usuario_cpf_numerico})
+# !!!!!!!!!!!!!!!!!!!
+            if st.session_state.tipo_usuario == "interno":
+                usuario_no_banco = banco_de_dados["usuarios_internos"].find_one({"cpf": usuario_cpf_numerico})
+
+            elif st.session_state.tipo_usuario == "externo":
+                usuario_no_banco = banco_de_dados["usuarios_externos"].find_one({"cpf": usuario_cpf_numerico})
+          
 
 
             col1, espaco, col2 = st.columns([12, 1, 12])
-
 
             # COLUNA 1
 
@@ -802,12 +811,18 @@ def home_page():
             #  3. Telefone
             telefone_input = col2.text_input("Telefone", value=usuario.get("telefone", "") if pd.notna(usuario.get("telefone")) else "")
 
+
+# !!!!!!!!!!!!!!!!!!!!!
             # 4. E-mail do coordenador
-            email_coordenador_input = col2.text_input("E-mail do(a) Coordenador(a)", value=usuario.get("email_coordenador", "") if pd.notna(usuario.get("email_coordenador")) else "")
+
+            if st.session_state.tipo_usuario == "interno":
+                email_coordenador_input = col2.text_input("E-mail do(a) Coordenador(a)", value=usuario.get("email_coordenador", "") if pd.notna(usuario.get("email_coordenador")) else "")
+
+            elif st.session_state.tipo_usuario == "externo":
+                col2.markdown("<div style='height: 84px'></div>", unsafe_allow_html=True)
 
             # col2.write('')
             # col2.write("**Dados Bancários**")
-
 
             #  5. Banco
             # Verifica se a chave 'banco' existe no cadastro do usuário
@@ -881,14 +896,16 @@ def home_page():
                         atualizacoes["rg"] = rg_input
                         usuario["rg"] = rg_input
 
+# !!!!!!!!!!!!!!!!!!!!!
                     # Atualiza o e-mail do coordenador se for válido
-                    if email_coordenador_input != usuario_no_banco.get("email_coordenador", ""):
-                        if re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", email_coordenador_input):
-                            atualizacoes["email_coordenador"] = email_coordenador_input
-                            usuario["email_coordenador"] = email_coordenador_input
-                        else:
-                            st.error("E-mail do coordenador inválido. Insira um endereço válido.")
-                            return
+                    if st.session_state.tipo_usuario == "interno":
+                        if email_coordenador_input != usuario_no_banco.get("email_coordenador", ""):
+                            if re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", email_coordenador_input):
+                                atualizacoes["email_coordenador"] = email_coordenador_input
+                                usuario["email_coordenador"] = email_coordenador_input
+                            else:
+                                st.error("E-mail do coordenador inválido. Insira um endereço válido.")
+                                return
 
 
                     banco_atualizacoes = {}
@@ -908,10 +925,21 @@ def home_page():
                         usuario["banco"] = atualizacoes["banco"]
                     
                     # Atualiza o cadastro no banco de dados
-                    banco_de_dados["usuarios_internos"].update_one(
-                        {"cpf": usuario_cpf_numerico},
-                        {"$set": atualizacoes}
-                    )
+                    
+# !!!!!!!!!!!!!!!!!!!!!
+
+                    if st.session_state.tipo_usuario == "interno":
+                        banco_de_dados["usuarios_internos"].update_one(
+                            {"cpf": usuario_cpf_numerico},
+                            {"$set": atualizacoes}
+                        )
+
+                    elif st.session_state.tipo_usuario == "externo":
+                        banco_de_dados["usuarios_externos"].update_one(
+                            {"cpf": usuario_cpf_numerico},
+                            {"$set": atualizacoes}
+                        )
+
                     # Se a atualização foi realizada com sucesso, exibe uma mensagem de sucesso
                     # e recarrega a página após alguns segundos
                     st.success("Cadastro atualizado com sucesso!")
@@ -1082,22 +1110,33 @@ def home_page():
             st.markdown("<div style='text-align: center; color: red; font-size: 20px;'>Você precisa enviar os <strong>relatórios pendentes</strong> antes de solicitar uma nova viagem.</div>", unsafe_allow_html=True)
 
         else:
+            # Tratamento quando não há todos os dados da pessoa no BD
+            def safe_get(dicionario, chave, default=""):
+                # Obtém o valor da chave no dicionário, ou um valor padrão se a chave não existir
+                valor = dicionario.get(chave, default)
+                
+                # Verifica se o valor é NaN (Not a Number) usando pandas.isna()
+                # Se for NaN, retorna uma string vazia
+                # Caso contrário, retorna o valor normalmente
+                return "" if pd.isna(valor) else valor
+
+            banco_info = safe_get(usuario, 'banco', {}) if isinstance(usuario.get('banco'), dict) else {}
+
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
             # Verifica o tipo de usuário e gera a URL apropriada para o formulário de solicitação de viagem
             if st.session_state.tipo_usuario == "interno":
 
-                # Tratamento quando não há todos os dados da pessoa no BD
-
-                def safe_get(dicionario, chave, default=""):
-                    # Obtém o valor da chave no dicionário, ou um valor padrão se a chave não existir
-                    valor = dicionario.get(chave, default)
+                # # Tratamento quando não há todos os dados da pessoa no BD
+                # def safe_get(dicionario, chave, default=""):
+                #     # Obtém o valor da chave no dicionário, ou um valor padrão se a chave não existir
+                #     valor = dicionario.get(chave, default)
                     
-                    # Verifica se o valor é NaN (Not a Number) usando pandas.isna()
-                    # Se for NaN, retorna uma string vazia
-                    # Caso contrário, retorna o valor normalmente
-                    return "" if pd.isna(valor) else valor
+                #     # Verifica se o valor é NaN (Not a Number) usando pandas.isna()
+                #     # Se for NaN, retorna uma string vazia
+                #     # Caso contrário, retorna o valor normalmente
+                #     return "" if pd.isna(valor) else valor
 
-                banco_info = safe_get(usuario, 'banco', {}) if isinstance(usuario.get('banco'), dict) else {}
                 jotform_sav_url = f"{st.secrets['links']['url_sav_int']}?nomeCompleto={safe_get(usuario, 'nome_completo')}&dataDe={safe_get(usuario, 'data_nascimento')}&genero={safe_get(usuario, 'genero')}&rg={safe_get(usuario, 'rg')}&cpf={safe_get(usuario, 'cpf')}&telefone={safe_get(usuario, 'telefone')}&email={safe_get(usuario, 'email')}&emailDoa={safe_get(usuario, 'email_coordenador')}&banco={safe_get(banco_info, 'nome')}&agencia={safe_get(banco_info, 'agencia')}&conta={safe_get(banco_info, 'conta')}&tipoDeConta={safe_get(banco_info, 'tipo')}"
 
             elif st.session_state.tipo_usuario == "externo":
