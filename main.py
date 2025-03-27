@@ -254,10 +254,10 @@ def mostrar_detalhes_rvs(row, df_rvss):
     sumbission_id = relatorio["Submission ID"]
     link_edicao = f"https://www.jotform.com/edit/{sumbission_id}"
 
-    col1, col2, col3 = st.columns([1, 1, 1])
+    # col1, col2, col3 = st.columns([1, 1, 1])
 
-    with col3.popover("Editar o Relatório", icon=":material/edit:", use_container_width=True):
-        st.markdown(f"<a href='{link_edicao}' target='_blank'>Clique aqui para editar</a>", unsafe_allow_html=True)
+    # with col3.popover("Editar o Relatório", icon=":material/edit:", use_container_width=True):
+    #     st.markdown(f"<a href='{link_edicao}' target='_blank'>Clique aqui para editar</a>", unsafe_allow_html=True)
 
     # INFORMAÇÕES
     st.write(f"**Código da viagem:** {row['Código da viagem:']}")   # Pega o código direto da SAV
@@ -270,10 +270,12 @@ def mostrar_detalhes_rvs(row, df_rvss):
     st.write(f"**Modo de transporte até o destino:** {relatorio['Modo de transporte até o destino:']}")
     st.write(f"**Valor gasto com transporte no destino:** {relatorio['Valor gasto com transporte no destino (R$):']}")
     st.write(f"**Valor das diárias recebidas:** {relatorio['Valor das diárias recebidas (R$):']}")
-    st.write(f"**Itens de despesa cobertos pelo anfitrião (descrição e valor):** {relatorio['Itens de despesa cobertos pelo anfitrião (descrição e valor):']}")
+    st.write(f"**Despesas cobertas pelo anfitrião (descrição e valor):** {relatorio['Despesas cobertas pelo anfitrião (descrição e valor):']}")
     st.write(f"**Atividades realizadas na viagem:** {relatorio['Descreva as atividades realizadas na viagem:']}")
     st.write(f"**Principais Resultados / Produtos:** {relatorio['Principais Resultados / Produtos:']}")
 
+    # Fotos
+    st.write("**Fotos da viagem:**")
     # Convertendo a string em uma lista de URLs
     lista_fotos = relatorio['Inclua 2 fotos da viagem:'].split("\n")
     # Criando colunas dinamicamente com base na quantidade de fotos
@@ -284,10 +286,16 @@ def mostrar_detalhes_rvs(row, df_rvss):
         with col:
             st.image(foto)
 
-    st.write(f"**Documentos anexados:** {relatorio['Faça upload dos anexos:']}")
-    st.write(f"**Despesas cobertas pelo anfitrião:** {relatorio['Despesas cobertas pelo anfitrião (descrição e valor):']}")
-    # st.write(f"**Submission ID:** {relatorio['Submission ID']}")
-
+    # Anexos
+    st.write("**Documentos anexados:**")
+    # Fazendo o split nas quebras de linha
+    url_list = relatorio['Faça upload dos anexos:'].split("\n")
+    for url in reversed(url_list):
+        # Obtém o nome do arquivo
+        nome_arquivo = url.split("/")[-1]  
+        # Mostra o link na página
+        st.markdown(f'<a href="{url}" target="_blank">{nome_arquivo}</a><br>', unsafe_allow_html=True)
+       
     st.write(f"**Observações:** {relatorio['Observações gerais:']}")
 
     st.write('')
@@ -326,7 +334,7 @@ def carregar_savs_int():
 
     sheet = client.open_by_key(sheet_id)
     
-    values_savs = sheet.worksheet("SAVs Internas Portal").get_all_values()
+    values_savs = sheet.worksheet("SAVs INTERNAS Portal").get_all_values()
     # values_savs = sheet.worksheet("TESTE RENATO SAVs").get_all_values()
     # values_savs = sheet.worksheet("Recebimento de SAVs").get_all_values()
 
@@ -352,8 +360,8 @@ def carregar_rvss_int():
 
     sheet = client.open_by_key(sheet_id)
 
-    # values_rvss = sheet.worksheet("TESTE RENATO SAVs").get_all_values()
-    values_rvss = sheet.worksheet("Recebimento de RVSs").get_all_values()
+    # Planilha de recebimento de RVSs internos
+    values_rvss = sheet.worksheet("RVSs INTERNOS Portal").get_all_values()
 
     # Criar DataFrame de RVSs. A primeira linha é usada como cabeçalho
     df_rvss = pd.DataFrame(values_rvss[1:], columns=values_rvss[0])
@@ -378,7 +386,7 @@ def carregar_savs_ext():
     sheet = client.open_by_key(sheet_id)
 
     # Ler todos os valores da planilha
-    values_savs = sheet.worksheet("SAVs EXTERNAS").get_all_values()
+    values_savs = sheet.worksheet("SAVs EXTERNAS Portal").get_all_values()
 
     # Criar DataFrame de SAVs. A primeira linha é usada como cabeçalho
     df_savs = pd.DataFrame(values_savs[1:], columns=values_savs[0])
@@ -409,7 +417,7 @@ def carregar_rvss_ext():
 
     # Ler todos os valores da planilha
     # values_rvss = sheet.worksheet("TESTE RENATO SAVs").get_all_values()
-    values_rvss = sheet.worksheet("RVSs EXTERNOS").get_all_values()
+    values_rvss = sheet.worksheet("RVSs EXTERNOS Portal").get_all_values()
 
     # Criar DataFrame de RVSs. A primeira linha é usada como cabeçalho
     df_rvss = pd.DataFrame(values_rvss[1:], columns=values_rvss[0])
@@ -724,9 +732,6 @@ def home_page():
         df_rvss = carregar_rvss_ext()
 
 
-    # USUÁRIO INTERNO ---------------------------
-
-    # if st.session_state.tipo_usuario == "interno":
         
     # Captura o usuário do session_state para a variável usuario
     usuario = st.session_state.usuario
@@ -999,6 +1004,7 @@ def home_page():
 
 
 # !!!!!!!!!!!!!!!!!!!
+            # Prepara as URLs de formulários com alguns campos pré-preenchidos
             if st.session_state.tipo_usuario == "interno":
                 # URL do formulário de RVS interno
                 jotform_rvs_url = f"{st.secrets['links']['url_rvs_int']}?codigoDa={row['Código da viagem:']}&qualE={row['Qual é a fonte do recurso?']}&nomeDo={row['Nome completo:']}&email={row['E-mail:']}&cidadesDe={destinos}&periodoDa={periodo_viagem}"
@@ -1045,7 +1051,7 @@ def home_page():
             if status_relatorio == "pendente":
                 # Se não foi entregue, botão para enviar
                 with col5.popover('Enviar relatório', use_container_width=True, icon=":material/description:"):
-                    st.markdown(f"<a href='{jotform_rvs_url}' target='_blank'>Clique aqui para enviar o relatório</a>", unsafe_allow_html=True)
+                    st.markdown(f"<a href='{jotform_rvs_url}' target='_blank'>Clique aqui para enviar</a>", unsafe_allow_html=True)
 
             st.divider()  # Separador entre cada linha da tabela
 
@@ -1076,6 +1082,7 @@ def home_page():
             st.markdown("<div style='text-align: center; color: red; font-size: 20px;'>Você precisa enviar os <strong>relatórios pendentes</strong> antes de solicitar uma nova viagem.</div>", unsafe_allow_html=True)
 
         else:
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # Verifica o tipo de usuário e gera a URL apropriada para o formulário de solicitação de viagem
             if st.session_state.tipo_usuario == "interno":
 
@@ -1090,19 +1097,12 @@ def home_page():
                     # Caso contrário, retorna o valor normalmente
                     return "" if pd.isna(valor) else valor
 
-                # import math
-                # def safe_get(dicionario, chave, default=""):
-                #     valor = dicionario.get(chave, default)
-                #     return "" if isinstance(valor, float) and math.isnan(valor) else valor
-
-
                 banco_info = safe_get(usuario, 'banco', {}) if isinstance(usuario.get('banco'), dict) else {}
-                jotform_sav_url = f"{st.secrets['links']['url_sav_int']}?nomeCompleto={safe_get(usuario, 'nome_completo')}&dataDe={safe_get(usuario, 'data_nascimento')}&genero={safe_get(usuario, 'genero')}&rg={safe_get(usuario, 'rg')}&cpf={safe_get(usuario, 'cpf')}&telefone={safe_get(usuario, 'telefone')}&email={safe_get(usuario, 'email')}&emailDoa={safe_get(usuario, 'email_coordenador')}&banco={safe_get(banco_info, 'nome')}&agencia={safe_get(banco_info, 'agencia')}&conta={safe_get(banco_info, 'conta')}"
-
+                jotform_sav_url = f"{st.secrets['links']['url_sav_int']}?nomeCompleto={safe_get(usuario, 'nome_completo')}&dataDe={safe_get(usuario, 'data_nascimento')}&genero={safe_get(usuario, 'genero')}&rg={safe_get(usuario, 'rg')}&cpf={safe_get(usuario, 'cpf')}&telefone={safe_get(usuario, 'telefone')}&email={safe_get(usuario, 'email')}&emailDoa={safe_get(usuario, 'email_coordenador')}&banco={safe_get(banco_info, 'nome')}&agencia={safe_get(banco_info, 'agencia')}&conta={safe_get(banco_info, 'conta')}&tipoDeConta={safe_get(banco_info, 'tipo')}"
 
             elif st.session_state.tipo_usuario == "externo":
                 # URL do formulário de SAV externa
-                jotform_sav_url = f"{st.secrets['links']['url_sav_ext']}?nomeCompleto={usuario['nome_completo']}&dataDe={usuario['data_nascimento']}&genero={usuario['genero']}&rg={usuario['rg']}&cpf={usuario['cpf']}&telefone={usuario['telefone']}&email={usuario['email']}&banco={usuario['banco']['nome']}&agencia={usuario['banco']['agencia']}&conta={usuario['banco']['conta']}"
+                jotform_sav_url = f"{st.secrets['links']['url_sav_ext']}?nomeCompleto={usuario['nome_completo']}&dataDe={usuario['data_nascimento']}&genero={usuario['genero']}&rg={usuario['rg']}&cpf={usuario['cpf']}&telefone={usuario['telefone']}&email={usuario['email']}&banco={usuario['banco']['nome']}&agencia={usuario['banco']['agencia']}&conta={usuario['banco']['conta']}&tipoDeConta={safe_get(banco_info, 'tipo')}"
 
             # Exibe o formulário em um iframe
             st.components.v1.iframe(jotform_sav_url, width=None, height=4000)
