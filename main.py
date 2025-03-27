@@ -19,7 +19,7 @@ from google.oauth2.service_account import Credentials
 
 st.set_page_config(
     layout="wide", 
-    page_title="Portal de Autorizações de Viagem",
+    page_title="Portal de Viagens do ISPN",
     # page_icon=logo_url  # Define o favicon
     )
 
