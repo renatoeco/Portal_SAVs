@@ -666,8 +666,10 @@ def novo_cadastro():
         data_nascimento = st.date_input("Data de Nascimento", format="DD/MM/YYYY", value=None)
         cpf = st.text_input("CPF", value=st.session_state.cpf_inserido if st.session_state.cpf_inserido else "")
         genero = st.selectbox("Gênero", [""] + ["Masculino", "Feminino", "Outro"], index=0)
-        rg = st.text_input("RG")
-        telefone = st.text_input("Telefone")
+        rg = st.text_input("RG e Órgão Emissor")
+
+        telefone = st.text_input("Telefone", placeholder="(00) 00000-0000")
+
         email = st.text_input("E-mail")
         
         # Dados bancários do usuário
@@ -675,7 +677,7 @@ def novo_cadastro():
         banco_nome = st.text_input("Nome do Banco")
         agencia = st.text_input("Agência")
         conta = st.text_input("Conta")
-        tipo_conta = st.selectbox("Tipo de Conta", ["Conta Corrente", "Poupança"])
+        tipo_conta = st.selectbox("Tipo de Conta", ["Conta Corrente", "Conta Poupança", "Conta Salário"], index=0)
         
         # Botão de submissão
         submit_button = st.form_submit_button("Cadastrar", type="primary")
@@ -723,7 +725,6 @@ def novo_cadastro():
 
 def home_page():
 
-
 # !!!!!!!!!!!!!!
     # Carregar dados com base no tipo de usuário
     if st.session_state.tipo_usuario == "interno":
@@ -743,7 +744,7 @@ def home_page():
     
 
     # Cria colunas para o nome do usuário e o botão atualizar
-    col1, col2, col3 = st.columns([8, 2, 2])
+    col1, col2, col3, col4, col5 = st.columns([2, 2, 7, 3, 3])
 
     # Exibe o nome do usuário
     col1.markdown(
@@ -778,11 +779,12 @@ def home_page():
 
             # COLUNA 1
 
-            # 1. Exibe o CPF, com a formatação
+            # 1. Nome
+            nome_input = col1.text_input("Nome Completo", value=usuario.get("nome_completo", ""))
+
+            # 2. Exibe o CPF, com a formatação
             cpf_input = col1.text_input("CPF", value=f"{usuario['cpf'][:3]}.{usuario['cpf'][3:6]}.{usuario['cpf'][6:9]}-{usuario['cpf'][9:]}", disabled=True)
 
-            # 2. Nome
-            nome_input = col1.text_input("Nome Completo", value=usuario.get("nome_completo", ""))
             
             #  3. Data de nascimento
             data_nascimento_input = col1.text_input("Data de Nascimento", value=usuario.get("data_nascimento", "") if pd.notna(usuario.get("data_nascimento")) else "")
@@ -797,16 +799,18 @@ def home_page():
 
             # COLUNA 2
 
-            # 1. Exibe o campo de RG e órgão emissor com valor vazio se não encontrado
-            rg_input = col2.text_input("RG e órgão emissor", value=usuario.get("rg", "") if pd.notna(usuario.get("rg")) else "")
-
-            # 2. Gênero
+            # 1. Gênero
             genero_input = col2.selectbox(
                 "Gênero",
                 ["", "Masculino", "Feminino", "Outro"],
                 index=["", "Masculino", "Feminino", "Outro"].index(usuario.get("genero", ""))
                 if usuario.get("genero") in ["Masculino", "Feminino", "Outro"] else 0
             )
+
+
+            # 2. Exibe o campo de RG e órgão emissor com valor vazio se não encontrado
+            rg_input = col2.text_input("RG e órgão emissor", value=usuario.get("rg", "") if pd.notna(usuario.get("rg")) else "")
+
 
             #  3. Telefone
             telefone_input = col2.text_input("Telefone", value=usuario.get("telefone", "") if pd.notna(usuario.get("telefone")) else "")
@@ -950,12 +954,12 @@ def home_page():
                     st.error("Usuário não encontrado.")
                     
     # Botão de acesso ao Meu cadastro
-    if col2.button("Meu cadastro", icon=":material/person:", use_container_width=True):
+    if col4.button("Meu cadastro", icon=":material/person:", use_container_width=True):
         meu_cadastro()
 
 
     # Botão para atualizar a página
-    if col3.button("Atualizar", icon=":material/refresh:", use_container_width=True):
+    if col5.button("Atualizar", icon=":material/refresh:", use_container_width=True):
         # Limpa o session_state e o cache, e recarrega a página
         st.session_state.status_usuario = ""
         st.cache_data.clear()
