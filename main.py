@@ -990,7 +990,7 @@ def home_page():
         if st.session_state.tipo_usuario == "interno":
             destinos = r'Cidade de chegada: (.*?)(?:,|$)'
         elif st.session_state.tipo_usuario == "externo":
-            destinos = r'Local de chegada: (.*?)(?:,|$)'
+            destinos = r'Cidade de chegada: (.*?)(?:,|$)'
         
         
         # Aplicar a regex para cada linha da coluna
