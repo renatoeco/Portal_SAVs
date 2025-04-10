@@ -1030,7 +1030,7 @@ def home_page():
             if st.session_state.tipo_usuario == "interno":
                 cidades_chegada = [viagem["Cidade de chegada"] for viagem in trechos]
             elif st.session_state.tipo_usuario == "externo":
-                cidades_chegada = [viagem["Local de chegada"] for viagem in trechos]
+                cidades_chegada = [viagem["Cidade de chegada"] for viagem in trechos]
             
             destinos = ", ".join(cidades_chegada)
 
