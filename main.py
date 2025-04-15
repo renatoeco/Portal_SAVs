@@ -532,7 +532,7 @@ def cabecalho_login():
     st.markdown(
         """
         <div style="text-align: center;">
-            <h2>Gestor de Viagens do ISPN</h2>
+            <h2>Portal de Viagens do ISPN</h2>
         </div>
         """,
         unsafe_allow_html=True
