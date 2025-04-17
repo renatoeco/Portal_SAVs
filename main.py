@@ -533,6 +533,9 @@ def cabecalho_login():
         """
         <div style="text-align: center;">
             <h2>Portal de Viagens do ISPN</h2>
+            <br>
+            <br>
+            <p style="font-size: 1.2em; color: red;">A plataforma estará disponível a partir de <strong>24 de abril de 2025</strong></p>
         </div>
         """,
         unsafe_allow_html=True
@@ -549,42 +552,46 @@ def cabecalho_login():
 def pagina_login_etapa_1():
     cabecalho_login()
 
+
+
+
     # INFORME SEU CPF
     col1, col2, col3 = st.columns([5, 2, 5])    
 
-    # Formulário para solicitar o CPF
-    with col2.form("form_login", border=False):
-        cpf_input = st.text_input("Digite seu CPF", placeholder="000.000.000-00")
-        if st.form_submit_button("Entrar"):
+
+    # # Formulário para solicitar o CPF
+    # with col2.form("form_login", border=False):
+    #     cpf_input = st.text_input("Digite seu CPF", placeholder="000.000.000-00")
+    #     if st.form_submit_button("Entrar"):
             
-            # Verifica se o CPF é válido
-            resultado = check_cpf(cpf_input)
+    #         # Verifica se o CPF é válido
+    #         resultado = check_cpf(cpf_input)
             
-            if resultado:
+    #         if resultado:
 
-                # Se o CPF é novo, vai para a página de cadastro
-                if st.session_state.tipo_usuario == "novo":
-                    st.session_state.logged_in = "novo_cadastro"
+    #             # Se o CPF é novo, vai para a página de cadastro
+    #             if st.session_state.tipo_usuario == "novo":
+    #                 st.session_state.logged_in = "novo_cadastro"
 
-                    # Força a atualização da página
-                    st.rerun()
+    #                 # Força a atualização da página
+    #                 st.rerun()
 
 
-                # Se o usuário for externo ou interno
-                elif st.session_state.tipo_usuario in ["externo", "interno"]:
+    #             # Se o usuário for externo ou interno
+    #             elif st.session_state.tipo_usuario in ["externo", "interno"]:
 
-                    # Atalho para desenvolvedores: loga automaticamente >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-                    # st.session_state.logged_in = "logado"
+    #                 # Atalho para desenvolvedores: loga automaticamente >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    #                 # st.session_state.logged_in = "logado"
 
-                    # Avançar para a etapa de código caso necessário
-                    st.session_state.logged_in = "etapa_2_codigo"
+    #                 # Avançar para a etapa de código caso necessário
+    #                 st.session_state.logged_in = "etapa_2_codigo"
 
-                    st.rerun()
+    #                 st.rerun()
 
     
-            else:
-                # Se o CPF for inválido, exibe mensagem de erro
-                st.error("CPF inválido.")
+    #         else:
+    #             # Se o CPF for inválido, exibe mensagem de erro
+    #             st.error("CPF inválido.")
 
 
 # Página de login etapa 2 - Código por e-mail
