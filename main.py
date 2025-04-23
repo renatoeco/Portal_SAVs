@@ -548,9 +548,9 @@ def cabecalho_login():
     st.write("")
 
 
-# # Página de login etapa 1 - CPF
-# def pagina_login_etapa_1():
-#     cabecalho_login()
+# Página de login etapa 1 - CPF
+def pagina_login_etapa_1():
+    cabecalho_login()
 
 
 
@@ -1167,25 +1167,25 @@ def cabecalho_login():
 
 
 
-# # Verifica se o usuário já está logado
-# if "logged_in" not in st.session_state:
-#     st.session_state.logged_in = "etapa_1_cpf"  # Define o estado de login como falso inicialmente
+# Verifica se o usuário já está logado
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = "etapa_1_cpf"  # Define o estado de login como falso inicialmente
 
-# # Exibe a página de login ou a página principal, dependendo do estado de login
-# if st.session_state.logged_in == "etapa_1_cpf":
-#     pagina_login_etapa_1()  
+# Exibe a página de login ou a página principal, dependendo do estado de login
+if st.session_state.logged_in == "etapa_1_cpf":
+    pagina_login_etapa_1()  
 
-# # Depois de colocar o cpf, vai pra etapa do recebimento do código por email
-# elif st.session_state.logged_in == "etapa_2_codigo":
-#     pagina_login_etapa_2()  
+# Depois de colocar o cpf, vai pra etapa do recebimento do código por email
+elif st.session_state.logged_in == "etapa_2_codigo":
+    pagina_login_etapa_2()  
 
-# # Usuário está logado, exibe a página inicial
-# elif st.session_state.logged_in == "logado":
-#     home_page()  
+# Usuário está logado, exibe a página inicial
+elif st.session_state.logged_in == "logado":
+    home_page()  
 
-# # Usuário novo, exibe a página de cadastro
-# elif st.session_state.logged_in == "novo_cadastro":
-#     novo_cadastro()
+# Usuário novo, exibe a página de cadastro
+elif st.session_state.logged_in == "novo_cadastro":
+    novo_cadastro()
 
 
 
