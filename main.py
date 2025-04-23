@@ -20,7 +20,7 @@ from google.oauth2.service_account import Credentials
 st.set_page_config(
     layout="wide", 
     page_title="Portal de Viagens do ISPN",
-    # page_icon=logo_url  # Define o favicon
+    page_icon="imagens/logo_ISPN_favicon.png"  # Define o favicon
     )
 
 # CSS para reduzir o espaço no topo da página
@@ -205,7 +205,7 @@ def mostrar_detalhes_sav(row):
     # Só interno
     # Botão de editar
     if st.session_state.tipo_usuario == "interno":
-        with col3.popover("Editar a SAV", icon=":material/edit:", use_container_width=True):
+        with col3.popover("Editar a Solicitação", icon=":material/edit:", use_container_width=True):
             st.markdown(f"<a href='{link_edicao}' target='_blank'>Clique aqui para editar</a>", unsafe_allow_html=True)
 
 
@@ -559,39 +559,39 @@ def pagina_login_etapa_1():
     col1, col2, col3 = st.columns([5, 2, 5])    
 
 
-    # # Formulário para solicitar o CPF
-    # with col2.form("form_login", border=False):
-    #     cpf_input = st.text_input("Digite seu CPF", placeholder="000.000.000-00")
-    #     if st.form_submit_button("Entrar"):
+    # Formulário para solicitar o CPF
+    with col2.form("form_login", border=False):
+        cpf_input = st.text_input("Digite seu CPF", placeholder="000.000.000-00")
+        if st.form_submit_button("Entrar"):
             
-    #         # Verifica se o CPF é válido
-    #         resultado = check_cpf(cpf_input)
+            # Verifica se o CPF é válido
+            resultado = check_cpf(cpf_input)
             
-    #         if resultado:
+            if resultado:
 
-    #             # Se o CPF é novo, vai para a página de cadastro
-    #             if st.session_state.tipo_usuario == "novo":
-    #                 st.session_state.logged_in = "novo_cadastro"
+                # Se o CPF é novo, vai para a página de cadastro
+                if st.session_state.tipo_usuario == "novo":
+                    st.session_state.logged_in = "novo_cadastro"
 
-    #                 # Força a atualização da página
-    #                 st.rerun()
+                    # Força a atualização da página
+                    st.rerun()
 
 
-    #             # Se o usuário for externo ou interno
-    #             elif st.session_state.tipo_usuario in ["externo", "interno"]:
+                # Se o usuário for externo ou interno
+                elif st.session_state.tipo_usuario in ["externo", "interno"]:
 
-    #                 # Atalho para desenvolvedores: loga automaticamente >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    #                 # st.session_state.logged_in = "logado"
+                    # Atalho para desenvolvedores: loga automaticamente >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                    # st.session_state.logged_in = "logado"
 
-    #                 # Avançar para a etapa de código caso necessário
-    #                 st.session_state.logged_in = "etapa_2_codigo"
+                    # Avançar para a etapa de código caso necessário
+                    st.session_state.logged_in = "etapa_2_codigo"
 
-    #                 st.rerun()
+                    st.rerun()
 
     
-    #         else:
-    #             # Se o CPF for inválido, exibe mensagem de erro
-    #             st.error("CPF inválido.")
+            else:
+                # Se o CPF for inválido, exibe mensagem de erro
+                st.error("CPF inválido.")
 
 
 # Página de login etapa 2 - Código por e-mail
@@ -966,7 +966,7 @@ def home_page():
 
 
     # Botão para atualizar a página
-    if col5.button("Atualizar", icon=":material/refresh:", use_container_width=True):
+    if col5.button("Atualizar página", icon=":material/refresh:", use_container_width=True):
         # Limpa o session_state e o cache, e recarrega a página
         st.session_state.status_usuario = ""
         st.cache_data.clear()
@@ -1010,8 +1010,8 @@ def home_page():
         col1.write('**Código da viagem**')
         col2.write('**Data da viagem**')
         col3.write('**Itinerário**')
-        # col4.write('**SAVs**')
-        # col5.write('**Relatórios**')
+        col4.write('**Solicitações**')
+        col5.write('**Relatórios**')
 
         # Iniciar a variável na session_state que vai identificar se o usuário está impedido ou não de enviar relatório (se tem algum pendente)
         st.session_state.status_usuario = ""
