@@ -51,7 +51,6 @@ cliente = MongoClient(MONGODB_URI)
 # Conectar ao MongoDB local
 # cliente = MongoClient('mongodb://localhost:27017/')  # Cria uma conexão com o banco de dados MongoDB
 
-
 banco_de_dados = cliente["plataforma_sav"]  # Seleciona o banco de dados
 
 
@@ -119,7 +118,6 @@ def enviar_email(destinatario, codigo):
         # Se der errado, exibe o erro e retorna False
         st.error(f"Erro ao enviar e-mail: {e}")
         return False
-
 
 
 
@@ -267,9 +265,21 @@ def mostrar_detalhes_rvs(row, df_rvss):
 
 # !!!!!!!!!!!!!!!!!!!
     if st.session_state.tipo_usuario == "interno":
-        st.write(f"**Modalidade:** {relatorio['Modalidade:']}")
-        st.write(f"**Modo de transporte até o destino:** {relatorio['Modo de transporte até o destino:']}")
-        st.write(f"**Despesas cobertas pelo anfitrião (descrição e valor):** {relatorio['Despesas cobertas pelo anfitrião (descrição e valor):']}")
+        
+        try: # Não tem no relatório de terceiros.
+            st.write(f"**Modalidade:** {relatorio['Modalidade:']}")
+        except:
+            pass
+
+        try: # Não tem no relatório de terceiros.
+            st.write(f"**Modo de transporte até o destino:** {relatorio['Modo de transporte até o destino:']}")
+        except:
+            pass
+
+        try: # Não tem no relatório de terceiros.
+            st.write(f"**Despesas cobertas pelo anfitrião (descrição e valor):** {relatorio['Despesas cobertas pelo anfitrião (descrição e valor):']}")
+        except:
+            pass
 
     st.write(f"**Número de pernoites:** {relatorio['Número de pernoites:']}")
     st.write(f"**Valor das diárias recebidas:** {relatorio['Valor das diárias recebidas (R$):']}")
@@ -302,6 +312,8 @@ def mostrar_detalhes_rvs(row, df_rvss):
     st.write(f"**Observações:** {relatorio['Observações gerais:']}")
 
     st.write('')
+
+
 
 
 # Carregar usuários internos no banco de dados ------------------------------
@@ -431,6 +443,187 @@ def carregar_rvss_ext():
     df_rvss = df_rvss.replace({'\$': '\\$'}, regex=True)
 
     return df_rvss
+
+
+# Carregar SAVs de terceiros no google sheets ------------------------------
+@st.cache_data(show_spinner=False)
+def carregar_savs_trc():
+
+    # Abrir a planilha de SAVs de terceiros
+    sheet = client.open_by_key(sheet_id)
+
+    # Ler todos os valores da planilha
+    values_savs = sheet.worksheet("SAVs TERCEIROS Portal").get_all_values()
+
+    # Criar DataFrame de SAVs. A primeira linha é usada como cabeçalho
+    df_savs = pd.DataFrame(values_savs[1:], columns=values_savs[0])
+
+    # Converter as colunas de data para datetime
+    df_savs["Submission Date"] = pd.to_datetime(df_savs["Submission Date"])  # Garantir que é datetime
+    df_savs["Submission Date"] = df_savs["Submission Date"].dt.strftime("%d/%m/%Y")  # Converter para string no formato brasileiro
+
+    # Filtar SAVs com o prefixo "TRC-"
+    df_savs = df_savs[df_savs['Código da viagem:'].str.upper().str.startswith('TRC-')]
+   
+    # Substitui o caractere $ por \$ para que o Streamlit possa exibir corretamente
+    df_savs = df_savs.replace({'\$': '\\$'}, regex=True)
+
+    # Renomeia as colunas para que tenham nomes mais legíveis
+    df_savs.rename(columns={'Insira aqui os deslocamentos considerando IDA e VOLTA. Cada trecho em uma nova linha:': 'Itinerário:'}, inplace=True)
+
+    return df_savs
+
+
+# Carregar RVSs externos no google sheets ------------------------------
+@st.cache_data(show_spinner=False)
+def carregar_rvss_trc():
+
+    # Abrir a planilha de RVSs externas
+    sheet = client.open_by_key(sheet_id)
+
+    # Ler todos os valores da planilha
+    # values_rvss = sheet.worksheet("TESTE RENATO SAVs").get_all_values()
+    values_rvss = sheet.worksheet("RVSs TERCEIROS Portal").get_all_values()
+
+    # Criar DataFrame de RVSs. A primeira linha é usada como cabeçalho
+    df_rvss_terceiros = pd.DataFrame(values_rvss[1:], columns=values_rvss[0])
+
+    # Filtar SAVs com o prefixo "TRC-"
+    df_rvss_terceiros = df_rvss_terceiros[df_rvss_terceiros['Código da viagem:'].str.upper().str.startswith('TRC-')]
+
+    # Converter as colunas de data para datetime
+    df_rvss_terceiros["Submission Date"] = pd.to_datetime(df_rvss_terceiros["Submission Date"])  # Garantir que é datetime
+    df_rvss_terceiros["Submission Date"] = df_rvss_terceiros["Submission Date"].dt.strftime("%d/%m/%Y")  # Converter para string no formato brasileiro
+
+    df_rvss_terceiros = df_rvss_terceiros.replace({'\$': '\\$'}, regex=True)
+
+    return df_rvss_terceiros
+
+
+@st.dialog("Cadastrar viajante externo", width="large")
+def cadastrar_externo():
+    with st.form("cadastrar_externo"):
+        # Criação de duas colunas para organização dos campos no formulário
+        col1, espaco, col2 = st.columns([12, 1, 12])
+
+        # COLUNA 1
+
+        # Campo para o nome completo
+        nome_input = col1.text_input("Nome Completo")
+
+        # Campo para o CPF
+        cpf_input = col1.text_input("CPF")
+
+        # Campo para a data de nascimento
+        data_nascimento_input = col1.text_input("Data de Nascimento")
+
+        # Campo para e-mail
+        email_input = col1.text_input("E-mail")
+
+        # COLUNA 2
+
+        # Campo para seleção de gênero
+        genero_input = col2.selectbox(
+            "Gênero",
+            ["", "Masculino", "Feminino", "Outro"],
+        )
+
+        # Campo para o RG e órgão emissor
+        rg_input = col2.text_input("RG e órgão emissor")
+
+        # Campo para o telefone
+        telefone_input = col2.text_input("Telefone")
+
+        # Espaço para alinhamento visual com os demais campos
+        col2.markdown("<div style='height: 84px'></div>", unsafe_allow_html=True)
+
+        # DADOS BANCÁRIOS
+
+        # Campo para o nome do banco
+        banco_nome_input = col1.text_input("Banco", value="")
+
+        # Campo para o número da agência
+        banco_agencia_input = col2.text_input("Agência", value="")
+
+        # Campo para o número da conta
+        banco_conta_input = col2.text_input("Conta", value="")
+
+        # Campo para o tipo de conta
+        banco_tipo_input = col1.selectbox(
+            "Tipo de Conta", 
+            ["Conta Corrente", "Conta Poupança", "Conta Salário"], 
+            index=0
+        )
+
+        st.write('')
+
+
+        if st.form_submit_button("Cadastrar viajante externo", icon=":material/person_add:", type="primary"):
+            # Verifica se há erros nos campos
+            erros = []
+
+            # Verifica se o nome completo foi preenchido
+            if not nome_input:
+                erros.append("Nome completo é obrigatório.")
+
+            # Verifica se o CPF foi preenchido
+            if not cpf_input:
+                erros.append("CPF é obrigatório.")
+
+            # Verifica se a data de nascimento está no formato correto
+            if not re.match(r"^\d{2}/\d{2}/\d{4}$", data_nascimento_input):
+                erros.append("Data de nascimento inválida. Use o formato DD/MM/AAAA.")
+
+            # Verifica se o e-mail é válido
+            if not re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", email_input):
+                erros.append("E-mail inválido.")
+
+            # Verifica se o gênero foi selecionado
+            if genero_input == "":
+                erros.append("Gênero é obrigatório.")
+
+            # Verifica se o RG foi preenchido
+            if not rg_input:
+                erros.append("RG é obrigatório.")
+
+            # Verifica se o telefone tem o tamanho correto
+            if len(telefone_input) < 10 or len(telefone_input) > 11:
+                erros.append("Telefone inválido. Use DDD + número.")
+
+            # Verifica se todos os campos bancários foram preenchidos
+            if not banco_nome_input or not banco_agencia_input or not banco_conta_input:
+                erros.append("Todos os campos bancários devem ser preenchidos.")
+
+            # Se houver erros, exibe-os
+            if erros:
+                for erro in erros:
+                    st.error(erro)
+            else:
+                # Se não houver erros, grava os dados no banco de dados
+                atualizacoes = {
+                    "nome_completo": nome_input,
+                    "cpf": cpf_input,
+                    "email": email_input,
+                    "data_nascimento": data_nascimento_input,
+                    "genero": genero_input,
+                    "rg": rg_input,
+                    "telefone": telefone_input,
+                    "banco": {
+                        "nome": banco_nome_input,
+                        "agencia": banco_agencia_input,
+                        "conta": banco_conta_input,
+                        "tipo": banco_tipo_input,
+                    }
+                }
+                # Insere o novo usuário no banco de dados
+                banco_de_dados["usuarios_externos"].insert_one(atualizacoes)
+                # Exibe uma mensagem de sucesso
+                st.success(":material/check: Viajante cadastrado com sucesso!")
+                # Aguarda 3 segundos antes de atualizar a página
+                time.sleep(3)
+                # Atualiza a página
+                st.rerun()
+
 
 
 # Função para verificar CPF e identificar o usuário------------------------------
@@ -571,7 +764,7 @@ def pagina_login_etapa_1():
                 # Se o usuário for externo ou interno
                 elif st.session_state.tipo_usuario in ["externo", "interno"]:
 
-                    # Atalho para desenvolvedores: loga automaticamente >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                    # Atalho para desenvolvedor >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
                     # st.session_state.logged_in = "logado"
 
                     # Avançar para a etapa de código caso necessário
@@ -726,9 +919,15 @@ def home_page():
 # !!!!!!!!!!!!!!
     # Carregar dados com base no tipo de usuário
     if st.session_state.tipo_usuario == "interno":
-        # Usuário interno: carrega SAVs e RVSs internas
+        # Usuário interno: 
+        # carrega SAVs e RVSs internas
         df_savs = carregar_savs_int()
         df_rvss = carregar_rvss_int()
+
+        # carrega SAVs e RVSs de terceiros
+        df_savs_terceiros = carregar_savs_trc()
+        df_rvss_terceiros = carregar_rvss_trc()
+
 
     elif st.session_state.tipo_usuario == "externo":
         # Usuário externo: carrega SAVs e RVSs externas
@@ -956,6 +1155,7 @@ def home_page():
         meu_cadastro()
 
 
+
     # Botão para atualizar a página
     if col5.button("Atualizar página", icon=":material/refresh:", use_container_width=True):
         # Limpa o session_state e o cache, e recarrega a página
@@ -966,9 +1166,14 @@ def home_page():
         
     st.write("")
 
-    # Abas da home
-    minhas_viagens, nova_sav = st.tabs([":material/flight_takeoff: Minhas Viagens", ":material/add: Nova Solicitação de Viagem"])
+# !!!!!!!!!!!!!!!!!!!!!!!!
+    if st.session_state.tipo_usuario == "interno":
 
+        # Abas da home
+        minhas_viagens, nova_sav, terceiros = st.tabs([":material/flight_takeoff: Minhas Viagens", ":material/add: Nova Solicitação de Viagem", ":material/group: Solicitações para Terceiros"])
+
+    elif st.session_state.tipo_usuario == "externo":
+        minhas_viagens, nova_sav = st.tabs([":material/flight_takeoff: Minhas Viagens", ":material/add: Nova Solicitação de Viagem"])
 
     # ABA MINHAS VIAGENS
 
@@ -1142,12 +1347,166 @@ def home_page():
             col2.subheader('Após enviar, role a página até o topo :material/keyboard_double_arrow_up:')
 
 
+# !!!!!!!!!!!!!!!!!!!!!!!!
+ 
+    # Se for usuário interno, mostra a aba de SAVs para Terceiros
+    if st.session_state.tipo_usuario == "interno":
+       with terceiros:
+
+
+        # NOVA SOLICITAÇÃO PARA TERCEIROS
+
+        df_usuarios_externos = carregar_externos()
+        df_usuarios_externos = df_usuarios_externos.sort_values(by='nome_completo', ascending=True)
+
+        st.write('**Nova Solicitação para Terceiros**')
+        st.write('')
+
+        # Cria as colunas para o formulário
+        col1, col2, col3, col4 = st.columns(4)
+
+        # Selecione o(a) viajante:
+        viajante = col1.selectbox('Selecione o(a) viajante:', [""] + df_usuarios_externos['nome_completo'].tolist())
+
+        if viajante != "":
+
+            # Popover para Nova Solicitação (não funciona direito)
+            # with col1.popover(':material/add: Nova Solicitação'):
+
+            # Monta a URL do JotForm para solicitação de SAV para Terceiros
+            jotform_sav_url = f"{st.secrets['links']['url_sav_trc']}?responsavel={safe_get(usuario, 'nome_completo')}&email_responsavel={safe_get(usuario, 'email')}&cpf_responsavel={safe_get(usuario, 'cpf')}&email_coordenador={safe_get(usuario, 'email_coordenador')}&nome_viajante={viajante}&dataDe={safe_get(usuario, 'data_nascimento')}&genero={safe_get(usuario, 'genero')}&rg={safe_get(usuario, 'rg')}&cpf={safe_get(usuario, 'cpf')}&telefone={safe_get(usuario, 'telefone')}&email={safe_get(usuario, 'email')}&emailDoa={safe_get(usuario, 'email_coordenador')}&banco={safe_get(banco_info, 'nome')}&agencia={safe_get(banco_info, 'agencia')}&conta={safe_get(banco_info, 'conta')}&tipoDeConta={safe_get(banco_info, 'tipo')}"
+
+            # Mostra a URL no Streamlit
+            col2.write('')
+            col2.write('')
+
+            col2.markdown(f"<a href='{jotform_sav_url}' target='_blank'>>> Clique aqui criar uma nova SAV para Terceiros</a>", unsafe_allow_html=True)
+
+        else:
+
+            # Se o viajante não for selecionado, mostra um aviso
+            col3.write('O nome não aparece na lista?')
+    
+            # Botão de acesso ao Cadastro de Viajante Externo
+            if col3.button("Cadastrar viajante", icon=":material/person_add:"):
+                cadastrar_externo()
+
+        st.divider()
+
+
+        # LISTA DE VIAGENS DE TERCEIROS
+
+        st.write('**Viagens solicitadas por mim**')
+        st.write('')
+
+
+        # Limpar a coluna CPF do responsável pela SAV quero apenas os números
+        df_savs_terceiros['CPF do responsável pela SAV:'] = df_savs_terceiros['CPF do responsável pela SAV:'].str.replace(r'[^\d]+', '', regex=True)
+
+
+        # Filtar SAVs com o CPF do usuário
+        df_savs_terceiros = df_savs_terceiros[df_savs_terceiros['CPF do responsável pela SAV:'].astype(str) == str(usuario['cpf'])]
+
+        # Capturar a data da viagem
+        df_savs_terceiros['Data da viagem:'] = df_savs_terceiros['Itinerário:'].str[6:16].replace('-', '/', regex=True)
+
+        # Expressão regular para capturar o nome da cidade de chegada
+        destinos = r'Cidade de chegada: (.*?)(?:,|$)'
+        
+        
+        # Aplicar a regex para cada linha da coluna
+        df_savs_terceiros["Destinos:"] = df_savs_terceiros["Itinerário:"].apply(lambda x: ' > '.join(re.findall(destinos, x)))
+
+
+        # Criar cabeçalho da "tabela"
+        col1, col2, col3, col4, col5, col6 = st.columns([2, 2, 4, 6, 3, 3])
+
+        col1.write('Código da viagem')
+        col2.write('Data da viagem')
+        col3.write('Nome do(a) viajante')
+        col4.write('Destinos')
+        col5.write('Solicitações')
+        col6.write('Relatórios')
+
+        # Iterar sobre a lista de viagens
+        for index, row in df_savs_terceiros[::-1].iterrows():
+
+            # Preparar o link personalizado para o relatório -----------------------------------------------------
+
+            # Extrair cidade(s) de destino
+            # Transformar o itinerário em uma lista de dicionários
+            trechos = parse_itinerario(row["Itinerário:"])
+
+            # Pegando a primeira e a última data
+            data_inicial = trechos[0]["Data"]
+            data_final = trechos[-1]["Data"]
+
+            # Formata a data do período da viagem para o formato DD/MM/YYYY a DD/MM/YYYY
+            periodo_viagem = f"{data_inicial} a {data_final}".replace('-', '/')
+
+# !!!!!!!!!!!!!!!!!!!!
+            # Extraindo todas as "Cidade de chegada" e concatenando com vírgula
+            # if st.session_state.tipo_usuario == "interno":
+            cidades_chegada = [viagem["Cidade de chegada"] for viagem in trechos]
+            # elif st.session_state.tipo_usuario == "externo":
+            #     cidades_chegada = [viagem["Cidade de chegada"] for viagem in trechos]
+            
+            destinos = ", ".join(cidades_chegada)
+
+
+# !!!!!!!!!!!!!!!!!!!
+            # Prepara as URLs de formulários com alguns campos pré-preenchidos
+            if st.session_state.tipo_usuario == "interno":
+                # URL do formulário de RVS de Terceiros
+                jotform_rvs_terceiros_url = f"{st.secrets['links']['url_rvs_trc']}?codigoDa={row['Código da viagem:']}&qualE={row['Qual é a fonte do recurso?']}&responsavel={row['Responsável pela SAV:']}&nome_viajante={row['Nome do(a) viajante:']}&email={row['E-mail:']}&cidadesDe={destinos}&periodoDa={periodo_viagem}"
+
+
+
+#             # ----------------------------------------------------------------------------------------------------- 
+
+#             # Conteúdo da lista de viagens
+
+            col1, col2, col3, col4, col5, col6 = st.columns([2, 2, 4, 6, 3, 3])
+            
+            col1.write(row['Código da viagem:'])
+            col2.write(row['Data da viagem:'])
+            col3.write(row['Nome do(a) viajante:'])
+            col4.write(row['Destinos:'])
+            col5.button('Detalhes', key=f"detalhes_{index}", on_click=mostrar_detalhes_sav, args=(row,), use_container_width=True, icon=":material/info:")
+            
+
+
+            # Botão dinâmico sobre o relatório --------------------------------------------
+
+            # Verificar se o relatório foi entregue. Procura se tem o código da SAV em algum relatório 
+            if row['Código da viagem:'].upper() in df_rvss_terceiros['Código da viagem:'].str.upper().values:
+
+                status_relatorio = "entregue"
+
+            # Se não tem nenhum relatório com esse código de SAV
+            else:
+                status_relatorio = "pendente"
+
+
+
+            # Se o relatório foi entregue, vê o relatório  
+            if status_relatorio == "entregue":
+                col6.button('Relatório entregue', key=f"entregue_{index}", on_click=mostrar_detalhes_rvs, args=(row, df_rvss_terceiros), use_container_width=True, icon=":material/check:", type="primary")
+            
+            # Se não foi entregue, botão para enviar
+            # else:
+            elif status_relatorio == "pendente":
+                # Se não foi entregue, botão para enviar
+                with col6.popover('Enviar relatório', use_container_width=True, icon=":material/description:"):
+                    st.markdown(f"<a href='{jotform_rvs_terceiros_url}' target='_blank'>Clique aqui para enviar</a>", unsafe_allow_html=True)
+
+            st.divider()  # Separador entre cada linha da tabela
+
+
 
 # ##################################################################
 # NAVEGAÇÃO DE PÁGINAS
 # ##################################################################
-
-
 
 # Verifica se o usuário já está logado
 if "logged_in" not in st.session_state:
@@ -1168,6 +1527,3 @@ elif st.session_state.logged_in == "logado":
 # Usuário novo, exibe a página de cadastro
 elif st.session_state.logged_in == "novo_cadastro":
     novo_cadastro()
-
-
-
