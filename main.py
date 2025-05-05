@@ -203,8 +203,7 @@ def mostrar_detalhes_sav(row):
     # Só interno
     # Botão de editar
     if st.session_state.tipo_usuario == "interno":
-        with col3.popover("Editar a Solicitação", icon=":material/edit:", use_container_width=True):
-            st.markdown(f"<a href='{link_edicao}' target='_blank'>Clique aqui para editar</a>", unsafe_allow_html=True)
+        col3.link_button("Editar a Solicitação", icon=":material/edit:", use_container_width=True, url=link_edicao)
 
 
     # INFORMAÇÕES
@@ -253,8 +252,7 @@ def mostrar_detalhes_rvs(row, df_rvss):
 
     # Botão para editar o relatório
     col1, col2, col3 = st.columns([1, 1, 1])
-    with col3.popover("Editar o Relatório", icon=":material/edit:", use_container_width=True):
-        st.markdown(f"<a href='{link_edicao}' target='_blank'>Clique aqui para editar</a>", unsafe_allow_html=True)
+    col3.link_button("Editar o Relatório", icon=":material/edit:", use_container_width=True, url=link_edicao)
 
     # INFORMAÇÕES
     st.write(f"**Código da viagem:** {row['Código da viagem:']}")   # Pega o código direto da SAV
@@ -1285,8 +1283,7 @@ def home_page():
             # else:
             if status_relatorio == "pendente":
                 # Se não foi entregue, botão para enviar
-                with col5.popover('Enviar relatório', use_container_width=True, icon=":material/description:"):
-                    st.markdown(f"<a href='{jotform_rvs_url}' target='_blank'>Clique aqui para enviar</a>", unsafe_allow_html=True)
+                col5.link_button('Enviar relatório', use_container_width=True, icon=":material/description:", url=jotform_rvs_url)
 
             st.divider()  # Separador entre cada linha da tabela
 
@@ -1369,9 +1366,6 @@ def home_page():
         viajante = col1.selectbox('Selecione o(a) viajante:', [""] + df_usuarios_externos['nome_completo'].tolist())
 
         if viajante != "":
-
-            # Popover para Nova Solicitação (não funciona direito)
-            # with col1.popover(':material/add: Nova Solicitação'):
 
             # Monta a URL do JotForm para solicitação de SAV para Terceiros
             jotform_sav_url = f"{st.secrets['links']['url_sav_trc']}?responsavel={safe_get(usuario, 'nome_completo')}&email_responsavel={safe_get(usuario, 'email')}&cpf_responsavel={safe_get(usuario, 'cpf')}&email_coordenador={safe_get(usuario, 'email_coordenador')}&nome_viajante={viajante}&dataDe={safe_get(usuario, 'data_nascimento')}&genero={safe_get(usuario, 'genero')}&rg={safe_get(usuario, 'rg')}&cpf={safe_get(usuario, 'cpf')}&telefone={safe_get(usuario, 'telefone')}&email={safe_get(usuario, 'email')}&emailDoa={safe_get(usuario, 'email_coordenador')}&banco={safe_get(banco_info, 'nome')}&agencia={safe_get(banco_info, 'agencia')}&conta={safe_get(banco_info, 'conta')}&tipoDeConta={safe_get(banco_info, 'tipo')}"
@@ -1497,8 +1491,7 @@ def home_page():
             # else:
             elif status_relatorio == "pendente":
                 # Se não foi entregue, botão para enviar
-                with col6.popover('Enviar relatório', use_container_width=True, icon=":material/description:"):
-                    st.markdown(f"<a href='{jotform_rvs_terceiros_url}' target='_blank'>Clique aqui para enviar</a>", unsafe_allow_html=True)
+                col6.link_button('Enviar relatório', use_container_width=True, icon=":material/description:", url=jotform_rvs_terceiros_url)
 
             st.divider()  # Separador entre cada linha da tabela
 
