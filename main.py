@@ -1374,7 +1374,10 @@ def home_page():
             col2.write('')
             col2.write('')
 
-            col2.markdown(f"<a href='{jotform_sav_url}' target='_blank'>>> Clique aqui criar uma nova SAV para Terceiros</a>", unsafe_allow_html=True)
+            # Mensagem de manutenção.
+            col2.write('Site em manutenção. Tente novamente mais tarde.')
+
+            # col2.markdown(f"<a href='{jotform_sav_url}' target='_blank'>>> Clique aqui criar uma nova SAV para Terceiros</a>", unsafe_allow_html=True)
 
         else:
 
