@@ -194,6 +194,9 @@ def mostrar_detalhes_sav(row):
 
     # TRATAMENTO DO LINK DE EDIÇÃO
     sumbission_id = row["Submission ID"]
+
+    usuario = st.session_state.usuario
+
     link_edicao = f"https://www.jotform.com/edit/{sumbission_id}"
 
     col1, col2, col3 = st.columns([1, 1, 1])
@@ -1363,21 +1366,46 @@ def home_page():
         col1, col2, col3, col4 = st.columns(4)
 
         # Selecione o(a) viajante:
-        viajante = col1.selectbox('Selecione o(a) viajante:', [""] + df_usuarios_externos['nome_completo'].tolist())
+        viajante_nome = col1.selectbox('Selecione o(a) viajante:', [""] + df_usuarios_externos['nome_completo'].tolist())
 
-        if viajante != "":
+        if viajante_nome != "":
+
+            viajante = df_usuarios_externos[df_usuarios_externos['nome_completo'] == viajante_nome].iloc[0].to_dict()
+
 
             # Monta a URL do JotForm para solicitação de SAV para Terceiros
-            jotform_sav_url = f"{st.secrets['links']['url_sav_trc']}?responsavel={safe_get(usuario, 'nome_completo')}&email_responsavel={safe_get(usuario, 'email')}&cpf_responsavel={safe_get(usuario, 'cpf')}&email_coordenador={safe_get(usuario, 'email_coordenador')}&nome_viajante={viajante}&dataDe={safe_get(usuario, 'data_nascimento')}&genero={safe_get(usuario, 'genero')}&rg={safe_get(usuario, 'rg')}&cpf={safe_get(usuario, 'cpf')}&telefone={safe_get(usuario, 'telefone')}&email={safe_get(usuario, 'email')}&emailDoa={safe_get(usuario, 'email_coordenador')}&banco={safe_get(banco_info, 'nome')}&agencia={safe_get(banco_info, 'agencia')}&conta={safe_get(banco_info, 'conta')}&tipoDeConta={safe_get(banco_info, 'tipo')}"
+
+            # Separa o dicionário do banco antes
+            banco_info_ext = safe_get(viajante, 'banco') or {}
+
+            # URL personalizado
+            jotform_sav_url = (
+                f"{st.secrets['links']['url_sav_trc']}?"
+                f"responsavel={safe_get(usuario, 'nome_completo')}&"
+                f"email_responsavel={safe_get(usuario, 'email')}&"
+                f"cpf_responsavel={safe_get(usuario, 'cpf')}&"
+                f"email_coordenador={safe_get(usuario, 'email_coordenador')}&"
+                f"nome_viajante={safe_get(viajante, 'nome_completo')}&"
+                f"dataDe={safe_get(viajante, 'data_nascimento')}&"
+                f"genero={safe_get(viajante, 'genero')}&"
+                f"rg={safe_get(viajante, 'rg')}&"
+                f"cpf={safe_get(viajante, 'cpf')}&"
+                f"telefone={safe_get(viajante, 'telefone')}&"
+                f"email={safe_get(viajante, 'email')}&"
+                f"banco={safe_get(banco_info_ext, 'nome')}&"
+                f"agencia={safe_get(banco_info_ext, 'agencia')}&"
+                f"conta={safe_get(banco_info_ext, 'conta')}&"
+                f"tipoDeConta={safe_get(banco_info_ext, 'tipo')}"
+            )
 
             # Mostra a URL no Streamlit
             col2.write('')
             col2.write('')
 
             # Mensagem de manutenção.
-            col2.write('Site em manutenção. Tente novamente mais tarde.')
+            # col2.write('Site em manutenção. Tente novamente mais tarde.')
 
-            # col2.markdown(f"<a href='{jotform_sav_url}' target='_blank'>>> Clique aqui criar uma nova SAV para Terceiros</a>", unsafe_allow_html=True)
+            col2.markdown(f"<a href='{jotform_sav_url}' target='_blank'>>> Clique aqui criar uma nova SAV para Terceiros</a>", unsafe_allow_html=True)
 
         else:
 
