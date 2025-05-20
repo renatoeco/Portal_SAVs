@@ -210,7 +210,10 @@ def mostrar_detalhes_sav(row):
 
 
     # INFORMAÇÕES
-    st.write(f"**Código:** {row['Código da viagem:']}")
+    # Se a SAV for para terceiros, mostra o nome do viajante
+    if row["Código da viagem:"].startswith("TRC"):
+        st.write(f"**Nome do(a) viajante:** {row['Nome do(a) viajante:']}")
+    st.write(f"**Código da viagem:** {row['Código da viagem:']}")
     st.write(f"**Data da solicitação:** {row['Submission Date']}")
     st.write(f"**Objetivo:** {row['Descrição do objetivo da viagem:']}")
     st.write(f"**Fonte de recurso:** {row['Qual é a fonte do recurso?']}")
@@ -258,6 +261,8 @@ def mostrar_detalhes_rvs(row, df_rvss):
     col3.link_button("Editar o Relatório", icon=":material/edit:", use_container_width=True, url=link_edicao)
 
     # INFORMAÇÕES
+    if row["Código da viagem:"].startswith("TRC"):
+        st.write(f"**Nome do(a) viajante:** {row['Nome do(a) viajante:']}")
     st.write(f"**Código da viagem:** {row['Código da viagem:']}")   # Pega o código direto da SAV
     st.write(f"**Data do envio do relatório:** {relatorio['Submission Date']}")
     st.write(f"**Fonte de recurso:** {relatorio['Qual é a fonte do recurso?']}")
