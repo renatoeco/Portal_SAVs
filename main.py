@@ -81,9 +81,18 @@ sheet_id = st.secrets.ids.id_planilha_recebimento
 # FUNÇÕES AUXILIARES
 # ##################################################################
 
+# Tratamento quando não há todos os dados da pessoa no BD
+def safe_get(dicionario, chave, default=""):
+    # Obtém o valor da chave no dicionário, ou um valor padrão se a chave não existir
+    valor = dicionario.get(chave, default)
+    
+    # Verifica se o valor é NaN (Not a Number) usando pandas.isna()
+    # Se for NaN, retorna uma string vazia
+    # Caso contrário, retorna o valor normalmente
+    return "" if pd.isna(valor) else valor
+
 
 # Função para enviar e-mail com código de verificação
-
 def enviar_email(destinatario, codigo):
     remetente = st.secrets["senhas"]["endereco_email"]
     senha = st.secrets["senhas"]["senha_email"]
@@ -1322,16 +1331,6 @@ def home_page():
             st.markdown("<div style='text-align: center; color: red; font-size: 20px;'>Você precisa enviar os <strong>relatórios pendentes</strong> antes de solicitar uma nova viagem.</div>", unsafe_allow_html=True)
 
         else:
-            # Tratamento quando não há todos os dados da pessoa no BD
-            def safe_get(dicionario, chave, default=""):
-                # Obtém o valor da chave no dicionário, ou um valor padrão se a chave não existir
-                valor = dicionario.get(chave, default)
-                
-                # Verifica se o valor é NaN (Not a Number) usando pandas.isna()
-                # Se for NaN, retorna uma string vazia
-                # Caso contrário, retorna o valor normalmente
-                return "" if pd.isna(valor) else valor
-
             banco_info = safe_get(usuario, 'banco', {}) if isinstance(usuario.get('banco'), dict) else {}
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1377,14 +1376,10 @@ def home_page():
 
             viajante = df_usuarios_externos[df_usuarios_externos['nome_completo'] == viajante_nome].iloc[0].to_dict()
 
-
             # Monta a URL do JotForm para solicitação de SAV para Terceiros
 
             # Separa o dicionário do banco antes
-            try:
-                banco_info_ext = safe_get(viajante, 'banco') or {}
-            except:
-                st.error("Erro no carregamento do usuário. Entre em contato com o administrador do sistema")
+            banco_info_ext = safe_get(viajante, 'banco') or {}
 
             # URL personalizado
             jotform_sav_url = (
