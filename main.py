@@ -1381,7 +1381,10 @@ def home_page():
             # Monta a URL do JotForm para solicitação de SAV para Terceiros
 
             # Separa o dicionário do banco antes
-            banco_info_ext = safe_get(viajante, 'banco') or {}
+            try:
+                banco_info_ext = safe_get(viajante, 'banco') or {}
+            except:
+                st.error("Erro no carregamento do usuário. Entre em contato com o administrador do sistema")
 
             # URL personalizado
             jotform_sav_url = (
