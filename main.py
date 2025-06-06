@@ -643,6 +643,8 @@ def cadastrar_externo():
 
 # Função para verificar CPF e identificar o usuário------------------------------
 def check_cpf(cpf_input):
+
+
     # Remover pontos e traços, considerando apenas os números
     cpf_numeros = ''.join(filter(str.isdigit, cpf_input))
 
@@ -661,7 +663,7 @@ def check_cpf(cpf_input):
 
         # Busca primeiro nos usuários internos
         df_usuarios_internos = carregar_internos()
-        
+
         # Verifica se existe um usuário interno com o CPF informado
         usuario_interno = df_usuarios_internos[df_usuarios_internos["cpf"] == cpf_numeros]
         
@@ -750,8 +752,6 @@ def cabecalho_login():
 # Página de login etapa 1 - CPF
 def pagina_login_etapa_1():
     cabecalho_login()
-
-
 
 
     # INFORME SEU CPF
@@ -978,15 +978,6 @@ def home_page():
             # Obtém o CPF numérico do usuário
             usuario_cpf_numerico = "".join(filter(str.isdigit, usuario['cpf']))
 
-# !!!!!!!!!!!!!!!!!!!
-            if st.session_state.tipo_usuario == "interno":
-                usuario_no_banco = banco_de_dados["usuarios_internos"].find_one({"cpf": usuario_cpf_numerico})
-
-            elif st.session_state.tipo_usuario == "externo":
-                usuario_no_banco = banco_de_dados["usuarios_externos"].find_one({"cpf": usuario_cpf_numerico})
-          
-
-
             col1, espaco, col2 = st.columns([12, 1, 12])
 
             # COLUNA 1
@@ -1040,17 +1031,18 @@ def home_page():
             # col2.write('')
             # col2.write("**Dados Bancários**")
 
+
             #  5. Banco
             # Verifica se a chave 'banco' existe no cadastro do usuário
-            if 'banco' in usuario_no_banco:  # Verifica se a chave 'banco' existe no cadastro
+            if 'banco' in usuario:  # Verifica se a chave 'banco' existe no cadastro
                 # Exibe os campos bancários com dados do banco, se existir
-                banco_nome_input = col1.text_input("Banco", value=usuario_no_banco.get("banco", {}).get("nome", ""))
-                banco_agencia_input = col2.text_input("Agência", value=usuario_no_banco.get("banco", {}).get("agencia", ""))
-                banco_conta_input = col2.text_input("Conta", value=usuario_no_banco.get("banco", {}).get("conta", ""))
+                banco_nome_input = col1.text_input("Banco", value=usuario.get("banco", {}).get("nome", ""))
+                banco_agencia_input = col2.text_input("Agência", value=usuario.get("banco", {}).get("agencia", ""))
+                banco_conta_input = col2.text_input("Conta", value=usuario.get("banco", {}).get("conta", ""))
                 banco_tipo_input = col1.selectbox(
                     "Tipo de Conta", 
                     ["Conta Corrente", "Conta Poupança", "Conta Salário"], 
-                    index=["Conta Corrente", "Conta Poupança", "Conta Salário"].index(usuario_no_banco.get("banco", {}).get("tipo", ""))
+                    index=["Conta Corrente", "Conta Poupança", "Conta Salário"].index(usuario.get("banco", {}).get("tipo", ""))
                 )
             else:
                 # Se não existir a chave 'banco', os campos bancários são exibidos vazios
@@ -1069,14 +1061,14 @@ def home_page():
                 atualizacoes = {}
                 
                 # Verifica se o usuário foi encontrado no banco de dados
-                if usuario_no_banco:
+                if usuario:
                     # Atualiza o nome completo
-                    if nome_input != usuario_no_banco.get("nome_completo", ""):
+                    if nome_input != usuario.get("nome_completo", ""):
                         atualizacoes["nome_completo"] = nome_input
                         usuario["nome_completo"] = nome_input
                     
                     # Atualiza o e-mail se for válido
-                    if email_input != usuario_no_banco.get("email", ""):
+                    if email_input != usuario.get("email", ""):
                         if re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", email_input):
                             atualizacoes["email"] = email_input
                             usuario["email"] = email_input
@@ -1085,7 +1077,7 @@ def home_page():
                             return
                     
                     # Atualiza o telefone se for válido
-                    if telefone_input != usuario_no_banco.get("telefone", ""):
+                    if telefone_input != usuario.get("telefone", ""):
                         telefone_numerico = "".join(filter(str.isdigit, telefone_input))
                         if len(telefone_numerico) < 10 or len(telefone_numerico) > 11:
                             st.error("Telefone inválido. Insira um telefone válido com DDD e número.")
@@ -1094,7 +1086,7 @@ def home_page():
                         usuario["telefone"] = telefone_input
                     
                     # Atualiza a data de nascimento se for válida
-                    if data_nascimento_input != usuario_no_banco.get("data_nascimento", ""):
+                    if data_nascimento_input != usuario.get("data_nascimento", ""):
                         data_numerica = "".join(filter(str.isdigit, data_nascimento_input))
                         if len(data_numerica) != 8:
                             st.error("Data de nascimento inválida. Insira uma data no formato DD/MM/YYYY.")
@@ -1103,19 +1095,19 @@ def home_page():
                         usuario["data_nascimento"] = data_nascimento_input
                     
                     # Atualiza o gênero
-                    if genero_input != usuario_no_banco.get("genero", ""):
+                    if genero_input != usuario.get("genero", ""):
                         atualizacoes["genero"] = genero_input
                         usuario["genero"] = genero_input
                     
                     # Atualiza o RG e órgão emissor
-                    if rg_input != usuario_no_banco.get("rg", ""):
+                    if rg_input != usuario.get("rg", ""):
                         atualizacoes["rg"] = rg_input
                         usuario["rg"] = rg_input
 
 # !!!!!!!!!!!!!!!!!!!!!
                     # Atualiza o e-mail do coordenador se for válido
                     if st.session_state.tipo_usuario == "interno":
-                        if email_coordenador_input != usuario_no_banco.get("email_coordenador", ""):
+                        if email_coordenador_input != usuario.get("email_coordenador", ""):
                             if re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", email_coordenador_input):
                                 atualizacoes["email_coordenador"] = email_coordenador_input
                                 usuario["email_coordenador"] = email_coordenador_input
@@ -1126,18 +1118,18 @@ def home_page():
 
                     banco_atualizacoes = {}
                     # Atualiza os dados bancários se forem diferentes
-                    if banco_nome_input != usuario_no_banco.get("banco", {}).get("nome", ""):
+                    if banco_nome_input != usuario.get("banco", {}).get("nome", ""):
                         banco_atualizacoes["nome"] = banco_nome_input
-                    if banco_agencia_input != usuario_no_banco.get("banco", {}).get("agencia", ""):
+                    if banco_agencia_input != usuario.get("banco", {}).get("agencia", ""):
                         banco_atualizacoes["agencia"] = banco_agencia_input
-                    if banco_conta_input != usuario_no_banco.get("banco", {}).get("conta", ""):
+                    if banco_conta_input != usuario.get("banco", {}).get("conta", ""):
                         banco_atualizacoes["conta"] = banco_conta_input
-                    if banco_tipo_input != usuario_no_banco.get("banco", {}).get("tipo", ""):
+                    if banco_tipo_input != usuario.get("banco", {}).get("tipo", ""):
                         banco_atualizacoes["tipo"] = banco_tipo_input
                     
                     # Se houver atualizações no banco, aplica as alterações
                     if banco_atualizacoes:
-                        atualizacoes["banco"] = {**usuario_no_banco.get("banco", {}), **banco_atualizacoes}
+                        atualizacoes["banco"] = {**usuario.get("banco", {}), **banco_atualizacoes}
                         usuario["banco"] = atualizacoes["banco"]
                     
                     # Atualiza o cadastro no banco de dados
