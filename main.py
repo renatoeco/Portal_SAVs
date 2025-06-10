@@ -1373,12 +1373,23 @@ def home_page():
             # Separa o dicionário do banco antes
             banco_info_ext = safe_get(viajante, 'banco') or {}
 
+            # Função para formatar o CPF e garantir que seja tratado como string quando cair no google sheets, e assim preservar os zeros à esquerda
+            def format_cpf(cpf: str) -> str:
+                # Remove tudo que não for número
+                digits = ''.join(filter(str.isdigit, cpf or ''))
+                # Preenche com zeros à esquerda até ter 11 dígitos
+                digits = digits.zfill(11)
+                # Aplica a máscara 000.000.000-00
+                return f"{digits[:3]}.{digits[3:6]}.{digits[6:9]}-{digits[9:]}"
+            cpf_formatado = format_cpf(safe_get(usuario, 'cpf'))
+
+
             # URL personalizado
             jotform_sav_url = (
                 f"{st.secrets['links']['url_sav_trc']}?"
                 f"responsavel={safe_get(usuario, 'nome_completo')}&"
                 f"email_responsavel={safe_get(usuario, 'email')}&"
-                f"cpf_responsavel={safe_get(usuario, 'cpf')}&"
+                f"cpf_responsavel={cpf_formatado}&"  # aqui usa o CPF formatado
                 f"email_coordenador={safe_get(usuario, 'email_coordenador')}&"
                 f"nome_viajante={safe_get(viajante, 'nome_completo')}&"
                 f"dataDe={safe_get(viajante, 'data_nascimento')}&"
