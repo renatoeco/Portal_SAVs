@@ -97,11 +97,13 @@ def enviar_email(destinatario, codigo):
     remetente = st.secrets["senhas"]["endereco_email"]
     senha = st.secrets["senhas"]["senha_email"]
 
-    assunto = "Código de Verificação da Solicitação de Viagem - ISPN"
+    assunto = f"Código de Verificação: {codigo}"
+
     corpo = f"""
     <html>
         <body>
-            <p style='font-size: 1.5em;'>
+            <h2>Portal de Viagens do ISPN</h2>
+            <p style='font-size: 1.3em;'>
                 Seu código de verificação é: <strong>{codigo}</strong>
             </p>
         </body>
