@@ -1335,15 +1335,15 @@ def home_page():
                 jotform_sav_url = f"{st.secrets['links']['url_sav_int']}?nomeCompleto={safe_get(usuario, 'nome_completo')}&dataDe={safe_get(usuario, 'data_nascimento')}&genero={safe_get(usuario, 'genero')}&rg={safe_get(usuario, 'rg')}&cpf={safe_get(usuario, 'cpf')}&telefone={safe_get(usuario, 'telefone')}&email={safe_get(usuario, 'email')}&emailDoa={safe_get(usuario, 'email_coordenador')}&banco={safe_get(banco_info, 'nome')}&agencia={safe_get(banco_info, 'agencia')}&conta={safe_get(banco_info, 'conta')}&tipoDeConta={safe_get(banco_info, 'tipo')}"
 
                 # Mensagem de manutenção
-                st.write('')
-                st.subheader(':material/build: Formulário temporariamente fora do ar para manutenção.')
+                # st.write('')
+                # st.subheader(':material/build: Formulário temporariamente fora do ar para manutenção.')
 
 
                 # Exibe o formulário em um iframe
-                # st.components.v1.iframe(jotform_sav_url, width=None, height=4000)
+                st.components.v1.iframe(jotform_sav_url, width=None, height=5000)
 
-                # col1, col2, col3 = st.columns(3)
-                # col2.subheader('Após enviar, role a página até o topo :material/keyboard_double_arrow_up:')
+                col1, col2, col3 = st.columns(3)
+                col2.subheader('Após enviar, role a página até o topo :material/keyboard_double_arrow_up:')
 
 
             elif st.session_state.tipo_usuario == "externo":
