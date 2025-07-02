@@ -256,24 +256,23 @@ def mostrar_detalhes_sav(row):
     # Container para botar uma borda em torno das informações do veículo alugado ou do ISPN
     veiculo = st.container(border=True)
 
-    if row['Um veículo alugado ou um veículo do ISPN em Santa Inês?']:
+    if row.get('Um veículo alugado ou um veículo do ISPN em Santa Inês?'):
         veiculo.write(row['Um veículo alugado ou um veículo do ISPN em Santa Inês?'])
 
+
     # VEÍCULO ALUGADO
-    if row['Descreva o tipo de veículo desejado:']:
+    if row.get('Descreva o tipo de veículo desejado:'):
         veiculo.write(row['Descreva o tipo de veículo desejado:'])
 
-    if row['Detalhe os locais e horários de retirada e retorno do veículo alugado:']:
+    if row.get('Detalhe os locais e horários de retirada e retorno do veículo alugado:'):
         veiculo.write(row['Detalhe os locais e horários de retirada e retorno do veículo alugado:'])
 
-
     # VEÍCULO DO ISPN
-    if row['Escolha o veículo:']:
+    if row.get('Escolha o veículo:'):
         veiculo.write(row['Escolha o veículo:'])
 
-    if row['Quais são os horários previstos de retirada e retorno do veículo?']:
+    if row.get('Quais são os horários previstos de retirada e retorno do veículo?'):
         veiculo.write(row['Quais são os horários previstos de retirada e retorno do veículo?'])
-
 
 
     st.write(f"**Observações:** {row['Observações gerais:']}")
