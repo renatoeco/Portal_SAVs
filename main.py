@@ -1580,8 +1580,6 @@ def home_page():
             col4.write(row['Destinos:'])
             col5.button('Detalhes', key=f"detalhes_{index}", on_click=mostrar_detalhes_sav, args=(row,), use_container_width=True, icon=":material/info:")
             
-            # ?????????????
-            st.write(row)
 
             # Botão dinâmico sobre o relatório --------------------------------------------
 
