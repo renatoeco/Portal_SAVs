@@ -7,6 +7,8 @@ import random
 import smtplib
 from email.mime.text import MIMEText
 import time
+from urllib.parse import quote
+
 
 import gspread
 from google.oauth2.service_account import Credentials
@@ -80,6 +82,11 @@ sheet_id = st.secrets.ids.id_planilha_recebimento
 # ##################################################################
 # FUNÇÕES AUXILIARES
 # ##################################################################
+
+# Faz o encode de valores para URL, pra usar em URL dinâmicas
+def encode_params(params):
+    return "&".join(f"{k}={quote(str(v), safe='')}" for k, v in params.items())
+
 
 # Tratamento quando não há todos os dados da pessoa no BD
 def safe_get(dicionario, chave, default=""):
@@ -1275,10 +1282,31 @@ def home_page():
             # Prepara as URLs de formulários com alguns campos pré-preenchidos
             if st.session_state.tipo_usuario == "interno":
                 # URL do formulário de RVS interno
-                jotform_rvs_url = f"{st.secrets['links']['url_rvs_int']}?codigoDa={row['Código da viagem:']}&qualE={row['Qual é a fonte do recurso?']}&nomeDo={row['Nome completo:']}&email={row['E-mail:']}&cidadesDe={destinos}&periodoDa={periodo_viagem}"
+                params = {
+                    "codigoDa": row["Código da viagem:"],
+                    "qualE": row["Qual é a fonte do recurso?"],
+                    "nomeDo": row["Nome completo:"],
+                    "email": row["E-mail:"],
+                    "cidadesDe": destinos,
+                    "periodoDa": periodo_viagem
+                }
+
+                jotform_rvs_url = f"{st.secrets['links']['url_rvs_int']}?{encode_params(params)}"
+
+
             elif st.session_state.tipo_usuario == "externo":
                 # URL do formulário de RVS externo
-                jotform_rvs_url = f"{st.secrets['links']['url_rvs_ext']}?codigoDa={row['Código da viagem:']}&qualE={row['Qual é a fonte do recurso?']}&nomeDo={row['Nome completo:']}&email={row['E-mail:']}&cidadesDe={destinos}&periodoDa={periodo_viagem}"
+                params = {
+                    "codigoDa": row["Código da viagem:"],
+                    "qualE": row["Qual é a fonte do recurso?"],
+                    "nomeDo": row["Nome completo:"],
+                    "email": row["E-mail:"],
+                    "cidadesDe": destinos,
+                    "periodoDa": periodo_viagem
+                }
+
+                jotform_rvs_url = f"{st.secrets['links']['url_rvs_ext']}?{encode_params(params)}"
+
             # ----------------------------------------------------------------------------------------------------- 
 
             # Conteúdo da lista de viagens
@@ -1290,7 +1318,6 @@ def home_page():
             col3.write(row['Destinos:'])
             col4.button('Detalhes', key=f"detalhes_{index}", on_click=mostrar_detalhes_sav, args=(row,), use_container_width=True, icon=":material/info:")
             
-
 
             # Botão dinâmico sobre o relatório --------------------------------------------
 
@@ -1527,9 +1554,19 @@ def home_page():
             # Prepara as URLs de formulários com alguns campos pré-preenchidos
             if st.session_state.tipo_usuario == "interno":
                 # URL do formulário de RVS de Terceiros
-                jotform_rvs_terceiros_url = f"{st.secrets['links']['url_rvs_trc']}?codigoDa={row['Código da viagem:']}&qualE={row['Qual é a fonte do recurso?']}&responsavel={row['Responsável pela SAV:']}&nome_viajante={row['Nome do(a) viajante:']}&email={row['E-mail:']}&cidadesDe={destinos}&periodoDa={periodo_viagem}"
+                params = {
+                    "codigoDa": row["Código da viagem:"],
+                    "qualE": row["Qual é a fonte do recurso?"],
+                    "responsavel": row["Responsável pela SAV:"],
+                    "nome_viajante": row["Nome do(a) viajante:"],
+                    "email": row["E-mail:"],
+                    "cidadesDe": destinos,
+                    "periodoDa": periodo_viagem
+                }
 
-
+                jotform_rvs_terceiros_url = f"{st.secrets['links']['url_rvs_trc']}?{encode_params(params)}"
+                
+                
 
 #             # ----------------------------------------------------------------------------------------------------- 
 
@@ -1543,7 +1580,8 @@ def home_page():
             col4.write(row['Destinos:'])
             col5.button('Detalhes', key=f"detalhes_{index}", on_click=mostrar_detalhes_sav, args=(row,), use_container_width=True, icon=":material/info:")
             
-
+            # ?????????????
+            st.write(row)
 
             # Botão dinâmico sobre o relatório --------------------------------------------
 
