@@ -1449,25 +1449,25 @@ def home_page():
             cpf_formatado = format_cpf(safe_get(usuario, 'cpf'))
 
 
-            # URL personalizado
-            jotform_sav_url = (
-                f"{st.secrets['links']['url_sav_trc']}?"
-                f"responsavel={safe_get(usuario, 'nome_completo')}&"
-                f"email_responsavel={safe_get(usuario, 'email')}&"
-                f"cpf_responsavel={cpf_formatado}&"  # aqui usa o CPF formatado
-                f"email_coordenador={safe_get(usuario, 'email_coordenador')}&"
-                f"nome_viajante={safe_get(viajante, 'nome_completo')}&"
-                f"dataDe={safe_get(viajante, 'data_nascimento')}&"
-                f"genero={safe_get(viajante, 'genero')}&"
-                f"rg={safe_get(viajante, 'rg')}&"
-                f"cpf={safe_get(viajante, 'cpf')}&"
-                f"telefone={safe_get(viajante, 'telefone')}&"
-                f"email={safe_get(viajante, 'email')}&"
-                f"banco={safe_get(banco_info_ext, 'nome')}&"
-                f"agencia={safe_get(banco_info_ext, 'agencia')}&"
-                f"conta={safe_get(banco_info_ext, 'conta')}&"
-                f"tipoDeConta={safe_get(banco_info_ext, 'tipo')}"
-            )
+            params = {
+                "responsavel": safe_get(usuario, "nome_completo"),
+                "email_responsavel": safe_get(usuario, "email"),
+                "cpf_responsavel": cpf_formatado,
+                "email_coordenador": safe_get(usuario, "email_coordenador"),
+                "nome_viajante": safe_get(viajante, "nome_completo"),
+                "dataDe": safe_get(viajante, "data_nascimento"),
+                "genero": safe_get(viajante, "genero"),
+                "rg": safe_get(viajante, "rg"),
+                "cpf": safe_get(viajante, "cpf"),
+                "telefone": safe_get(viajante, "telefone"),
+                "email": safe_get(viajante, "email"),
+                "banco": safe_get(banco_info_ext, "nome"),
+                "agencia": safe_get(banco_info_ext, "agencia"),
+                "conta": safe_get(banco_info_ext, "conta"),
+                "tipoDeConta": safe_get(banco_info_ext, "tipo"),
+            }
+
+            jotform_sav_url = f"{st.secrets['links']['url_sav_trc']}?{encode_params(params)}"
 
             # Mostra a URL no Streamlit
             col2.write('')
