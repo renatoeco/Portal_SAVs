@@ -1578,7 +1578,7 @@ def home_page():
             col2.write(row['Data da viagem:'])
             col3.write(row['Nome do(a) viajante:'])
             col4.write(row['Destinos:'])
-            col5.button('Detalhes', key=f"detalhes_{index}", on_click=mostrar_detalhes_sav, args=(row,), use_container_width=True, icon=":material/info:")
+            col5.button('Detalhes', key=f"detalhes_terc_{index}", on_click=mostrar_detalhes_sav, args=(row,), use_container_width=True, icon=":material/info:")
             
 
             # Botão dinâmico sobre o relatório --------------------------------------------
