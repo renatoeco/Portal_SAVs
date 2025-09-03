@@ -1596,7 +1596,7 @@ def home_page():
 
             # Se o relatório foi entregue, vê o relatório  
             if status_relatorio == "entregue":
-                col6.button('Relatório entregue', key=f"entregue_{index}", on_click=mostrar_detalhes_rvs, args=(row, df_rvss_terceiros), use_container_width=True, icon=":material/check:", type="primary")
+                col6.button('Relatório entregue', key=f"entregue_ter_{index}", on_click=mostrar_detalhes_rvs, args=(row, df_rvss_terceiros), use_container_width=True, icon=":material/check:", type="primary")
             
             # Se não foi entregue, botão para enviar
             # else:
