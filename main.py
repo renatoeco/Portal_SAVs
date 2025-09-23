@@ -8,6 +8,7 @@ import smtplib
 from email.mime.text import MIMEText
 import time
 from urllib.parse import quote
+import streamlit.components.v1 as components
 
 
 import gspread
@@ -738,17 +739,22 @@ def check_cpf(cpf_input):
 # LOGO
 # ##################################################################
 
-logo_url = "https://ispn.org.br/site/wp-content/uploads/2021/04/logo_ISPN_2021.png"
+# Exibe o logo
+container_logo = st.container(horizontal=True, horizontal_alignment="center")
+container_logo.image("imagens/logo_ISPN_horizontal_ass.png", width=300)
 
-# Usando HTML para centralizar a imagem
-st.markdown(
-    f"""
-    <div style="text-align: center;">
-        <img src="{logo_url}" width="250">
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+
+# logo_url = "https://ispn.org.br/site/wp-content/uploads/2021/04/logo_ISPN_2021.png"
+
+# # Usando HTML para centralizar a imagem
+# st.markdown(
+#     f"""
+#     <div style="text-align: center;">
+#         <img src="{logo_url}" width="250">
+#     </div>
+#     """,
+#     unsafe_allow_html=True
+# )
 
 # Espaçamentos
 st.write("")
@@ -1391,7 +1397,8 @@ def home_page():
 
 
                 # Exibe o formulário em um iframe
-                st.components.v1.iframe(jotform_sav_url, width=None, height=5000)
+                with st.container(horizontal=True, horizontal_alignment="center"):
+                    components.iframe(jotform_sav_url, width=1000, height=5000)
 
                 col1, col2, col3 = st.columns(3)
                 col2.subheader('Após enviar, role a página até o topo :material/keyboard_double_arrow_up:')
@@ -1402,7 +1409,8 @@ def home_page():
                 jotform_sav_url = f"{st.secrets['links']['url_sav_ext']}?nomeCompleto={usuario['nome_completo']}&dataDe={usuario['data_nascimento']}&genero={usuario['genero']}&rg={usuario['rg']}&cpf={usuario['cpf']}&telefone={usuario['telefone']}&email={usuario['email']}&banco={usuario['banco']['nome']}&agencia={usuario['banco']['agencia']}&conta={usuario['banco']['conta']}&tipoDeConta={safe_get(banco_info, 'tipo')}"
 
                 # Exibe o formulário em um iframe
-                st.components.v1.iframe(jotform_sav_url, width=None, height=4000)
+                with st.container(horizontal=True, horizontal_alignment="center"):
+                    components.iframe(jotform_sav_url, width=1000, height=4000)
 
                 col1, col2, col3 = st.columns(3)
                 col2.subheader('Após enviar, role a página até o topo :material/keyboard_double_arrow_up:')
