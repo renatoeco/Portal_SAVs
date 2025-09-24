@@ -1389,7 +1389,22 @@ def home_page():
             # Verifica o tipo de usuário e gera a URL apropriada para o formulário de solicitação de viagem
             if st.session_state.tipo_usuario == "interno":
 
-                jotform_sav_url = f"{st.secrets['links']['url_sav_int']}?nomeCompleto={safe_get(usuario, 'nome_completo')}&dataDe={safe_get(usuario, 'data_nascimento')}&genero={safe_get(usuario, 'genero')}&rg={safe_get(usuario, 'rg')}&cpf={safe_get(usuario, 'cpf')}&telefone={safe_get(usuario, 'telefone')}&email={safe_get(usuario, 'email')}&emailDoa={safe_get(usuario, 'email_coordenador')}&banco={safe_get(banco_info, 'nome')}&agencia={safe_get(banco_info, 'agencia')}&conta={safe_get(banco_info, 'conta')}&tipoDeConta={safe_get(banco_info, 'tipo')}"
+                jotform_sav_url = (
+                    f"{st.secrets['links']['url_sav_int']}?"
+                    f"nomeCompleto={safe_get(usuario, 'nome_completo')}&"
+                    f"dataDe={safe_get(usuario, 'data_nascimento')}&"
+                    f"genero={safe_get(usuario, 'genero')}&"
+                    f"rg={safe_get(usuario, 'rg')}&"
+                    f"cpf={safe_get(usuario, 'cpf')}&"
+                    f"telefone={safe_get(usuario, 'telefone')}&"
+                    f"email={safe_get(usuario, 'email')}&"
+                    f"emailDoa={safe_get(usuario, 'email_coordenador')}&"
+                    f"banco={safe_get(banco_info, 'nome')}&"
+                    f"agencia={safe_get(banco_info, 'agencia')}&"
+                    f"conta={safe_get(banco_info, 'conta')}&"
+                    f"tipoDeConta={safe_get(banco_info, 'tipo')}"
+                )
+
 
                 # Mensagem de manutenção
                 # st.write('')
@@ -1406,7 +1421,21 @@ def home_page():
 
             elif st.session_state.tipo_usuario == "externo":
                 # URL do formulário de SAV externa
-                jotform_sav_url = f"{st.secrets['links']['url_sav_ext']}?nomeCompleto={usuario['nome_completo']}&dataDe={usuario['data_nascimento']}&genero={usuario['genero']}&rg={usuario['rg']}&cpf={usuario['cpf']}&telefone={usuario['telefone']}&email={usuario['email']}&banco={usuario['banco']['nome']}&agencia={usuario['banco']['agencia']}&conta={usuario['banco']['conta']}&tipoDeConta={safe_get(banco_info, 'tipo')}"
+                jotform_sav_url = (
+                    f"{st.secrets['links']['url_sav_ext']}?"
+                    f"nomeCompleto={usuario['nome_completo']}&"
+                    f"dataDe={usuario['data_nascimento']}&"
+                    f"genero={usuario['genero']}&"
+                    f"rg={usuario['rg']}&"
+                    f"cpf={usuario['cpf']}&"
+                    f"telefone={usuario['telefone']}&"
+                    f"email={usuario['email']}&"
+                    f"banco={usuario['banco']['nome']}&"
+                    f"agencia={usuario['banco']['agencia']}&"
+                    f"contaCorrente={usuario['banco']['conta']}&"
+                    f"tipo_conta={safe_get(banco_info, 'tipo')}"
+                )
+
 
                 # Exibe o formulário em um iframe
                 with st.container(horizontal=True, horizontal_alignment="center"):
@@ -1472,7 +1501,7 @@ def home_page():
                 "banco": safe_get(banco_info_ext, "nome"),
                 "agencia": safe_get(banco_info_ext, "agencia"),
                 "conta": safe_get(banco_info_ext, "conta"),
-                "tipoDeConta": safe_get(banco_info_ext, "tipo"),
+                "tipo_conta": safe_get(banco_info_ext, "tipo"),
             }
 
             jotform_sav_url = f"{st.secrets['links']['url_sav_trc']}?{encode_params(params)}"
