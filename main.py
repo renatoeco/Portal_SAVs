@@ -408,7 +408,7 @@ def carregar_savs_int():
     # Filtar SAVs com o prefixo "SAV-"
     df_savs = df_savs[df_savs['Código da viagem:'].str.upper().str.startswith('SAV-')]
 
-    df_savs = df_savs.replace({'\$': '\\$'}, regex=True)
+    df_savs = df_savs.replace({r'\$': r'\\$'}, regex=True)
 
 
     return df_savs
@@ -433,7 +433,7 @@ def carregar_rvss_int():
     df_rvss["Submission Date"] = pd.to_datetime(df_rvss["Submission Date"])  # Garantir que é datetime
     df_rvss["Submission Date"] = df_rvss["Submission Date"].dt.strftime("%d/%m/%Y")  # Converter para string no formato brasileiro
 
-    df_rvss = df_rvss.replace({'\$': '\\$'}, regex=True)
+    df_rvss = df_rvss.replace({r'\$': r'\\$'}, regex=True)
 
     return df_rvss
 
@@ -459,7 +459,7 @@ def carregar_savs_ext():
     df_savs = df_savs[df_savs['Código da viagem:'].str.upper().str.startswith('EXT-')]
    
     # Substitui o caractere $ por \$ para que o Streamlit possa exibir corretamente
-    df_savs = df_savs.replace({'\$': '\\$'}, regex=True)
+    df_savs = df_savs.replace({r'\$': r'\\$'}, regex=True)
 
     # Renomeia as colunas para que tenham nomes mais legíveis
     df_savs.rename(columns={'Insira aqui os seus deslocamentos. Cada trecho em uma nova linha:': 'Itinerário:',
@@ -489,7 +489,7 @@ def carregar_rvss_ext():
     df_rvss["Submission Date"] = pd.to_datetime(df_rvss["Submission Date"])  # Garantir que é datetime
     df_rvss["Submission Date"] = df_rvss["Submission Date"].dt.strftime("%d/%m/%Y")  # Converter para string no formato brasileiro
 
-    df_rvss = df_rvss.replace({'\$': '\\$'}, regex=True)
+    df_rvss = df_rvss.replace({r'\$': r'\\$'}, regex=True)
 
     return df_rvss
 
@@ -515,7 +515,7 @@ def carregar_savs_trc():
     df_savs = df_savs[df_savs['Código da viagem:'].str.upper().str.startswith('TRC-')]
    
     # Substitui o caractere $ por \$ para que o Streamlit possa exibir corretamente
-    df_savs = df_savs.replace({'\$': '\\$'}, regex=True)
+    df_savs = df_savs.replace({r'\$': r'\\$'}, regex=True)
 
     # Renomeia as colunas para que tenham nomes mais legíveis
     df_savs.rename(columns={'Insira aqui os deslocamentos considerando IDA e VOLTA. Cada trecho em uma nova linha:': 'Itinerário:'}, inplace=True)
@@ -544,7 +544,7 @@ def carregar_rvss_trc():
     df_rvss_terceiros["Submission Date"] = pd.to_datetime(df_rvss_terceiros["Submission Date"])  # Garantir que é datetime
     df_rvss_terceiros["Submission Date"] = df_rvss_terceiros["Submission Date"].dt.strftime("%d/%m/%Y")  # Converter para string no formato brasileiro
 
-    df_rvss_terceiros = df_rvss_terceiros.replace({'\$': '\\$'}, regex=True)
+    df_rvss_terceiros = df_rvss_terceiros.replace({r'\$': r'\\$'}, regex=True)
 
     return df_rvss_terceiros
 
@@ -908,7 +908,15 @@ def novo_cadastro():
         
         # Campos do formulário para o usuário preencher
         nome_completo = st.text_input("Nome Completo")
-        data_nascimento = st.date_input("Data de Nascimento", format="DD/MM/YYYY", value=None)
+        
+        data_nascimento = st.date_input(
+            "Data de Nascimento",
+            value=None,
+            format="DD/MM/YYYY",
+            min_value=date(1900, 1, 1),
+            max_value=date.today(),
+        )
+        
         cpf = st.text_input("CPF", value=st.session_state.cpf_inserido if st.session_state.cpf_inserido else "")
         genero = st.selectbox("Gênero", [""] + ["Masculino", "Feminino", "Outro"], index=0)
         rg = st.text_input("RG e Órgão Emissor")
